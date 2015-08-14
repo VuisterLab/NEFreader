@@ -169,7 +169,7 @@ class Test_Parser_parse(unittest.TestCase):
     def test_parser_parse_with_predefined_tokens(self):
         p = NEFreader.Parser(tokens=['data_nef_my_nmr_project'])
         d = p.parse()
-        self.assertEquals(d['data block'], 'data_nef_my_nmr_project')
+        self.assertEquals(d.datablock, 'data_nef_my_nmr_project')
 
     def test_parse_whitespace(self):
         self.p.parse(['\n'])
@@ -187,7 +187,7 @@ class Test_Parser_parse(unittest.TestCase):
 
     def test_parse_data_block_declaration(self):
         self.p.parse(['data_nef_my_nmr_project'])
-        self.assertEquals(self.d['data block'], 'data_nef_my_nmr_project')
+        self.assertTrue(hasattr(self.d, 'datablock'))
 
     def test_parse_multiple_data_blocks(self):
         self.assertRaises(Exception, self.p.parse,

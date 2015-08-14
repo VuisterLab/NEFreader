@@ -15,15 +15,14 @@ paris.open(nef_file, strict=True)
 
 
 # Get the data block name
-print('Data Block name: {}'.format(paris['data block']))
+print('Data Block name: {}'.format(paris.datablock))
 print()
 
 # List the saveframes and their categories
 print ('Saveframes : categories')
 for k in paris.keys():
-    if k != 'data block':
-        category = paris[k]['sf_category']
-        print(k, ':', category)
+    category = paris[k]['sf_category']
+    print(k, ':', category)
 print()
 
 

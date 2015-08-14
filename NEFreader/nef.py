@@ -34,6 +34,8 @@ class Nef(OrderedDict):
 
         self.input_filename = input_filename
 
+        self.datablock = None
+
         if initialize:
             self.initialize()
 
@@ -62,13 +64,15 @@ class Nef(OrderedDict):
         """
         Populate the NEF object from a file-like object
 
+        :param file_like:
+        :param strict: bool
         """
         tokenizer = Tokenizer()
         parser = Parser(self)
 
         parser.strict = strict
 
-        del self['data block']
+        del self.datablock
         del self['nef_nmr_meta_data']
         del self['nef_molecular_system']
         del self['nef_chemical_shift_list']
@@ -85,6 +89,8 @@ class Nef(OrderedDict):
         """
         Open a file on disk and use it to populate the NEF object.
 
+        :param filename: str
+        :param strict: bool
         """
 
         if filename is None:
@@ -178,6 +184,6 @@ class Validator(object):
         if nef is None:
             nef = self.nef
 
-        if 'data block' not in nef.keys():
+        if not hasattr(nef, 'datablock'):
             return ['No data block specified']
         return []
