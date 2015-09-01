@@ -3,7 +3,7 @@ __author__ = 'TJ Ragan'
 __version__ = '0.1'
 
 from collections import OrderedDict
-from warnings import warn
+import logging
 
 
 class Tokenizer(object):
@@ -343,7 +343,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
+                logging.WARNING(error_message)
 
 
     def _data_name_token(self, i, t):
@@ -414,7 +414,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
+                logging.WARNING(error_message)
 
     def _end_saveframe_token(self, i):
         """
@@ -475,8 +475,8 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
-                warn('Padding values to correct.')
+                logging.WARNING(error_message)
+                logging.WARNING('Padding values to correct.')
                 self._loop_data += ['.'] * (number_of_columns - (number_of_data_values %
                                                                  number_of_columns))
 
@@ -507,7 +507,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
+                logging.WARNING(error_message)
         self._loop_columns.append(self._data_name.split('.')[1])
 
 
