@@ -480,9 +480,8 @@ class Parser(object):
                 raise Exception(error_message)
             else:
                 logging.WARNING(error_message)
-
-
-        self.target[self._saveframe_name][self._loop_name] = [self._loop_columns, self._loop_data]
+        self._loop_data.append(self._loop_row)
+        self.target[self._saveframe_name][self._loop_name] = self._loop_data
 
         if self._saveframe_name is None:
             self._state = 'start'

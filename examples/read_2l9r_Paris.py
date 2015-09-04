@@ -29,12 +29,12 @@ print()
 
 # List the information available in the `sequence` loop of the nef_molecular_system saveframe
 print('nef_molecular_system;sequence columns')
-print(paris['nef_molecular_system']['nef_sequence'][0])
+print(list(paris['nef_molecular_system']['nef_sequence'][0].keys()))
 print()
 
 
 # List the 3 letter codes for the sequence
-nef_sequence_loop = paris['nef_molecular_system']['nef_sequence'][1]
+nef_sequence_loop = paris['nef_molecular_system']['nef_sequence']
 seq = [s['residue_type'] for s in nef_sequence_loop]
 print('3 letter sequence')
 print(seq)
@@ -43,7 +43,7 @@ print()
 
 # Get the H, N shifts
 # This code can be simplified, but is here to demonstrate access rather than production code
-cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift'][1]
+cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift']
 aa_number_column = [row['sequence_code'] for row in cs_loop]
 aa_type_column = [row['residue_type'] for row in cs_loop]
 atom_name_column = [row['atom_name'] for row in cs_loop]
@@ -80,7 +80,7 @@ try:
     import numpy as np
     import pandas as pd
 
-    cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift'][1]
+    cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift']
     df = pd.DataFrame(cs_loop)
     df.replace({'.': np.NAN, 'true': True, 'false': False}, inplace=True)
     atom_names_to_use = list(df['atom_name'].unique())
@@ -108,7 +108,7 @@ try:
 
 
 # Or the fancy pandas way that does everything, then select what to print at the end
-    cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift'][1]
+    cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift']
     df = pd.DataFrame(cs_loop)
 
     pvt_values = df[['sequence_code','atom_name','value']]\
