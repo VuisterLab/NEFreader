@@ -85,7 +85,7 @@ class Nef(OrderedDict):
             print(validation_problems)
 
 
-    def open(self, filename=None, strict=True):
+    def load(self, filename=None, strict=True):
         """
         Open a file on disk and use it to populate the NEF object.
 
