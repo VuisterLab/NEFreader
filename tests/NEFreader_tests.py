@@ -249,10 +249,8 @@ class Test_Parser_parse(unittest.TestCase):
         self.p.parse(tokens)
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][0], ['database_name'])
-
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][1], ['BMRB'])
+                                       ['nef_related_entries']
+                                       [0]['database_name'], 'BMRB')
 
     def test_parse_loops(self):
         tokens = ['data_nef_my_nmr_project']
@@ -270,14 +268,12 @@ class Test_Parser_parse(unittest.TestCase):
         self.p.parse(tokens)
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][0], ['database_name'])
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][1], ['BMRB'])
+                                       ['nef_related_entries']
+                                       [0]['database_name'], 'BMRB')
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_program_script'][0], ['program_name'])
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_program_script'][1], ['CYANA'])
+                                       ['nef_program_script']
+                                       [0]['program_name'], 'CYANA')
 
 
     def test_parse_loop_without_stop(self):
@@ -290,11 +286,10 @@ class Test_Parser_parse(unittest.TestCase):
 
         self.p.parse(tokens)
 
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][0], ['database_name'])
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][1], ['BMRB'])
+                                       ['nef_related_entries']
+                                       [0]['database_name'], 'BMRB')
 
 
     def test_parse_loops_last_without_stop(self):
@@ -312,14 +307,13 @@ class Test_Parser_parse(unittest.TestCase):
         self.p.parse(tokens)
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][0], ['database_name'])
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][1], ['BMRB'])
+                                       ['nef_related_entries']
+                                       [0]['database_name'], 'BMRB')
+
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_program_script'][0], ['program_name'])
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_program_script'][1], ['CYANA'])
+                                       ['nef_program_script']
+                                       [0]['program_name'], 'CYANA')
 
     def test_parse_loops_without_stop(self):
         tokens = ['data_nef_my_nmr_project']
@@ -351,14 +345,12 @@ class Test_Parser_parse(unittest.TestCase):
         self.p.parse(tokens)
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][0], ['database_name'])
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_related_entries'][1], ['BMRB'])
+                                       ['nef_related_entries']
+                                       [0]['database_name'], 'BMRB')
 
         self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_program_script'][0], ['program_name'])
-        self.assertEquals(self.p.target['nef_nmr_meta_data']
-                                       ['nef_program_script'][1], ['CYANA'])
+                                       ['nef_program_script']
+                                       [0]['program_name'], 'CYANA')
 
 
     def test_parse_close_loop_without_opening_loop_first(self):
@@ -396,10 +388,10 @@ class Test_Parser_parse(unittest.TestCase):
         self.p.strict = False
         self.p.parse(tokens)
 
-        self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries'][0],
-                                       ['database_name', 'database_accession_code'])
-        self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries'][1],
-                                       ['BMRB', '12345'])
+        self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries']
+                                       [0]['database_name'], 'database_accession_code')
+        self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries']
+                                       [0]['BMRB'], '12345')
 
 
 class Test_files(unittest.TestCase):

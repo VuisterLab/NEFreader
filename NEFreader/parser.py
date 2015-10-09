@@ -3,7 +3,7 @@ __author__ = 'TJ Ragan'
 __version__ = '0.1'
 
 from collections import OrderedDict
-from warnings import warn
+import logging
 
 
 class Tokenizer(object):
@@ -285,7 +285,7 @@ class Parser(object):
 
 
     def _global_statement(self, t):
-        raise NotImplementedError('Globals not implemented.')
+        raise NotImplementedError('Globals not allowed in NEF.')
 
 
     def _save_token(self, i, t):
@@ -343,7 +343,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
+                logging.WARNING(error_message)
 
 
     def _data_name_token(self, i, t):
@@ -379,11 +379,17 @@ class Parser(object):
         """
         if self._state == 'in loop columns specification':
             self._state = 'in loop data'
+            self._loop_column_number = 0
 
         if self._state == 'in saveframe':
             self._add_to_saveframe(i, t)
         elif self._state == 'in loop data':
-            self._loop_data.append(t)
+            if self._loop_column_number >= len(self._loop_columns):
+                self._loop_column_number = 0
+                self._loop_data.append(self._loop_row)
+                self._loop_row = OrderedDict()
+            self._loop_row[self._loop_columns[self._loop_column_number]] = t
+            self._loop_column_number += 1
 
     def _add_to_saveframe(self, i, t):
         """
@@ -414,7 +420,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
+                logging.WARNING(error_message)
 
     def _end_saveframe_token(self, i):
         """
@@ -452,6 +458,7 @@ class Parser(object):
         self._loop_name = None
         self._loop_columns = []
         self._loop_data = []
+        self._loop_row = OrderedDict()
 
 
     def _finish_loop(self, i):
@@ -464,23 +471,17 @@ class Parser(object):
         :type i: int    # Token number
         :raise Exception:
         """
-        number_of_columns = len(self._loop_columns)
-        number_of_data_values = len(self._loop_data)
-        if number_of_data_values % number_of_columns > 0:
-            error_message = 'Token {}: Number of data values ({}) is not a multiple of number of'
+
+        if self._loop_column_number != len(self._loop_columns):
+            error_message = 'Token {}: Number of data values is not a multiple of number of'
             error_message += ' column names in loop {}'
-            error_message = error_message.format(i,
-                                                 number_of_data_values,
-                                                 self._loop_name)
+            error_message = error_message.format(i, self._loop_name)
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
-                warn('Padding values to correct.')
-                self._loop_data += ['.'] * (number_of_columns - (number_of_data_values %
-                                                                 number_of_columns))
-
-        self.target[self._saveframe_name][self._loop_name] = [self._loop_columns, self._loop_data]
+                logging.WARNING(error_message)
+        self._loop_data.append(self._loop_row)
+        self.target[self._saveframe_name][self._loop_name] = self._loop_data
 
         if self._saveframe_name is None:
             self._state = 'start'
@@ -489,6 +490,7 @@ class Parser(object):
 
         self._loop_name = None
         self._loop_columns = []
+        del self._loop_column_number
 
 
     def _loop_column_name_token(self, i):
@@ -507,7 +509,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                warn(error_message)
+                logging.WARNING(error_message)
         self._loop_columns.append(self._data_name.split('.')[1])
 
 

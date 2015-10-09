@@ -40,8 +40,6 @@ class Nef(OrderedDict):
             self.initialize()
 
     def initialize(self):
-        self['data block'] = 'DEFAULT'
-
         self['nef_nmr_meta_data'] = OrderedDict()
         self['nef_nmr_meta_data']['sf_category'] = 'nef_nmr_meta_data'
         self['nef_nmr_meta_data']['sf_framecode'] = 'nef_nmr_meta_data'

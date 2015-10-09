@@ -9,7 +9,7 @@ Then, we'll explore the file and find some data.
 from NEFreader import Nef
 
 
-nef_file = 'tests/test_files/CCPN_2l9r_Paris_155.nef'
+nef_file = '../tests/test_files/CCPN_2l9r_Paris_155.nef'
 paris = Nef()
 paris.open(nef_file, strict=True)
 
@@ -17,6 +17,7 @@ paris.open(nef_file, strict=True)
 # Get the data block name
 print('Data Block name: {}'.format(paris.datablock))
 print()
+
 
 # List the saveframes and their categories
 print ('Saveframes : categories')
@@ -28,36 +29,34 @@ print()
 
 # List the information available in the `sequence` loop of the nef_molecular_system saveframe
 print('nef_molecular_system;sequence columns')
-print(paris['nef_molecular_system']['nef_sequence'][0])
+print(list(paris['nef_molecular_system']['nef_sequence'][0].keys()))
 print()
 
 
 # List the 3 letter codes for the sequence
 nef_sequence_loop = paris['nef_molecular_system']['nef_sequence']
-number_of_columns = len(nef_sequence_loop[0])
-sequence_column = nef_sequence_loop[0].index('residue_type')
-print('Sequence')
-print(nef_sequence_loop[1][sequence_column::number_of_columns])
+seq = [s['residue_type'] for s in nef_sequence_loop]
+print('3 letter sequence')
+print(seq)
 print()
 
 
 # Get the H, N shifts
 # This code can be simplified, but is here to demonstrate access rather than production code
 cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift']
-number_of_columns = len(cs_loop[0])
-aa_number_column = cs_loop[0].index('sequence_code')
-aa_type_column = cs_loop[0].index('residue_type')
-atom_name_column = cs_loop[0].index('atom_name')
-cs_column = cs_loop[0].index('value')
-rows = zip(cs_loop[1][aa_number_column::number_of_columns],
-           cs_loop[1][aa_type_column::number_of_columns],
-           cs_loop[1][atom_name_column::number_of_columns],
-           cs_loop[1][cs_column::number_of_columns])
+aa_number_column = [row['sequence_code'] for row in cs_loop]
+aa_type_column = [row['residue_type'] for row in cs_loop]
+atom_name_column = [row['atom_name'] for row in cs_loop]
+cs_column = [row['value'] for row in cs_loop]
+rows = zip(aa_number_column,
+           aa_type_column,
+           atom_name_column,
+           cs_column)
 
-h_or_n_shifts = [row for row in rows if row[aa_type_column] in ('H','N')]
+h_or_n_shifts = [row for row in rows if row[2] in ('H','N')]
 
-first_aa = int(rows[0][0])
-last_aa = int(rows[-1][0])
+first_aa = int(min(aa_number_column))
+last_aa = int(max(aa_number_column))
 
 shifts = {i:['.', '.','.'] for i in range(first_aa, last_aa+1)}
 
@@ -82,12 +81,7 @@ try:
     import pandas as pd
 
     cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift']
-    number_of_columns = len(cs_loop[0])
-
-    # reshape the list of data values to a list of lists using numpy...
-    ld = np.array(cs_loop[1]).reshape(-1, number_of_columns)
-    # then create the dataframe
-    df = pd.DataFrame(ld, columns=cs_loop[0])
+    df = pd.DataFrame(cs_loop)
     df.replace({'.': np.NAN, 'true': True, 'false': False}, inplace=True)
     atom_names_to_use = list(df['atom_name'].unique())
 
@@ -111,6 +105,31 @@ try:
     # Optionally you can replace the NA values with `.`
     print(df_merged[['type', 'H', 'N']].fillna('.'))
     print()
+
+
+# Or the fancy pandas way that does everything, then select what to print at the end
+    cs_loop = paris['nef_chemical_shift_list_bmrb21.str']['nef_chemical_shift']
+    df = pd.DataFrame(cs_loop)
+
+    pvt_values = df[['sequence_code','atom_name','value']]\
+                    .pivot(index='sequence_code', columns='atom_name')
+    pvt_values.columns = pvt_values.columns.droplevel(0)
+
+    pvt_uncertainties = df[['sequence_code','atom_name','value_uncertainty']]\
+                           .pivot(index='sequence_code', columns='atom_name')
+    pvt_uncertainties.columns = pvt_uncertainties.columns.droplevel(0)
+
+    pvt = pvt_values.join(pvt_uncertainties,rsuffix='_uncertainty')
+
+    res_types = df.drop('atom_name', axis=1)
+    res_types = res_types.drop_duplicates('sequence_code')
+    res_types = res_types.set_index('sequence_code', drop=True)
+
+    pvt = pvt.join(res_types)
+    pvt = pvt.rename(columns={'residue_type': 'type',
+                              'chain_code': 'chain'})
+
+    print(pvt[['type', 'H', 'H_uncertainty', 'N', 'N_uncertainty']].fillna('.'))
 
 except ImportError:
     pass
