@@ -11,7 +11,7 @@ from NEFreader import Nef
 
 nef_file = '../tests/test_files/CCPN_2l9r_Paris_155.nef'
 paris = Nef()
-paris.open(nef_file, strict=True)
+paris.load(nef_file, strict=True)
 
 
 # Get the data block name
@@ -133,11 +133,3 @@ try:
 
 except ImportError:
     pass
-
-
-
-
-
-
-
-

@@ -2,157 +2,13 @@ from __future__ import absolute_import, print_function, unicode_literals
 __author__ = 'TJ Ragan'
 
 import unittest
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
 import NEFreader
 from collections import OrderedDict
-
-
-class Test_Tokenizer_util_functions(unittest.TestCase):
- 
-    def setUp(self):
-        self.t = NEFreader.Tokenizer()
-
-    def test_uncommented_newline_reset_state(self):
-        self.t._state = 'invalid state for testing only'
-        self.t._token = ''
-        self.t._uncommented_newline()
-        self.assertEquals( self.t._state, 'start' )
-
-    def test_uncommented_newline_empty_token(self):
-        self.t._token = ''
-        self.t._uncommented_newline()
-        self.assertEquals( self.t.tokens, ['\n'] )
-
-    def test_uncommented_newline_nonempty_token(self):
-        self.t._state = 'in token'
-        self.t._token = ['t','e','s','t']
-        self.t._uncommented_newline()
-        self.assertEquals( self.t.tokens, ['test','\n'] )
-
-
-class Test_Tokenizer_tokenize(unittest.TestCase):
-
-    def setUp(self):
-        self.t = NEFreader.Tokenizer()
-
-    def test_tokenizer_setup_with_chars(self):
-        t = NEFreader.Tokenizer('test')
-        self.assertEquals(t.chars, 'test')
-
-    def test_tokenizer_tokenize_with_predefined_chars(self):
-        t = NEFreader.Tokenizer('test')
-        tokens = t.tokenize()
-        self.assertEquals(tokens, ['test'])
-
-    def test_tokenize_noncomment_without_newline(self):
-        self.t.tokenize('5.324')
-        self.assertEquals( self.t.tokens, ['5.324'] )
-
-    def test_tokenize_noncomment2_without_newline(self):
-        self.t.tokenize('light_blue')
-        self.assertEquals( self.t.tokens, ['light_blue'] )
-
-    def test_tokenize_noncomment_with_newline(self):
-        self.t.tokenize('test\n')
-        self.assertEquals( self.t.tokens, ['test','\n'] )
-
-
-    def test_tokenize_quoted_string(self):
-        self.t.tokenize("""'low melting point' """)
-        self.assertEquals( self.t.tokens, ['low melting point'] )
-
-    def test_tokenize_quoted_string_with_internal_quote(self):
-        self.t.tokenize("""'classed as 'unknown' """)
-        self.assertEquals( self.t.tokens, ["classed as 'unknown"] )
-
-    def test_tokenize_quoted_string(self):
-        self.t.tokenize("""'test string'\t""")
-        self.assertEquals( self.t.tokens, ['test string'] )
-
-    def test_tokenize_quoted_string(self):
-        self.t.tokenize("""'test string'\n""")
-        self.assertEquals( self.t.tokens, ['test string', '\n'] )
-
-
-    def test_tokenize_double_quoted_string(self):
-        self.t.tokenize('''"low melting point" ''')
-        self.assertEquals( self.t.tokens, ['low melting point'] )
-
-    def test_tokenize_double_quoted_string_with_internal_quote(self):
-        self.t.tokenize('''"classed as 'unknown" ''')
-        self.assertEquals( self.t.tokens, ["classed as 'unknown"] )
-
-    def test_tokenize_double_quoted_string(self):
-        self.t.tokenize('''"test string"\t''')
-        self.assertEquals( self.t.tokens, ['test string'] )
-
-    def test_tokenize_double_quoted_string(self):
-        self.t.tokenize('''"test string"\n''')
-        self.assertEquals( self.t.tokens, ['test string', '\n'] )
-
-
-    def test_tokenize_semicolon_quoted_string(self):
-        s = """;\nDepartment of Computer Science\nUniversity of Western Australia\n;"""
-        t_s = """\nDepartment of Computer Science\nUniversity of Western Australia\n"""
-        self.t.tokenize(s)
-        self.assertEquals(self.t.tokens, [t_s] )
-
-    def test_tokenize_semicolon_quoted_string2(self):
-        s = """;Department of Computer Science\nUniversity of Western Australia\n;"""
-        t_s = """Department of Computer Science\nUniversity of Western Australia\n"""
-        self.t.tokenize(s)
-        self.assertEquals(self.t.tokens, [t_s] )
-
-    def test_tokenize_semicolon_quoted_string3(self):
-        s = """;\nDepartment of Computer Science\nUniversity of Western Australia\n;test"""
-        t_s = """\nDepartment of Computer Science\nUniversity of Western Australia\n"""
-        self.t.tokenize(s)
-        self.assertEquals(self.t.tokens, [t_s, 'test'] )
-
-    def test_tokenize_string_with_semicolon(self):
-        s = """Department of Computer Science;University of\nWestern Australia"""
-        self.t.tokenize(s)
-        self.assertEquals(self.t.tokens, ['Department', 'of', 'Computer', 'Science;University',
-                                          'of', '\n', 'Western', 'Australia'] )
-
-    def test_tokenize_general_string(self):
-        self.t.tokenize('nef_nmr_meta_data')
-        self.assertEquals( self.t.tokens, ['nef_nmr_meta_data'] )
-
-    def test_tokenize_string_with_period(self):
-        self.t.tokenize('_nef_nmr_meta_data.sf_category')
-        self.assertEquals( self.t.tokens, ['_nef_nmr_meta_data.sf_category'] )
-
-    def test_tokenize_string_with_leading_underscore(self):
-        self.t.tokenize('_nef_nmr_meta_data.sf_category')
-        self.assertEquals( self.t.tokens, ['_nef_nmr_meta_data.sf_category'] )
-
-
-    def test_tokenize_bare_newline(self):
-        self.t.tokenize('\n')
-        self.assertEquals( self.t.tokens, ['\n'] )
-
-    def test_tokenize_bare_newlines(self):
-        self.t.tokenize('\n\n\n')
-        self.assertEquals( self.t.tokens, ['\n']*3 )
-
-
-    def test_tokenize_tab(self):
-        self.t.tokenize('\t')
-        self.assertEquals( self.t.tokens, [] )
-
-
-    def test_tokenize_space(self):
-        self.t.tokenize(' ')
-        self.assertEquals( self.t.tokens, [] )
-
-
-    def test_tokenize_comment_with_newline(self):
-        self.t.tokenize('#=\n')
-        self.assertEquals( self.t.tokens, ['#=','\n'] )
-
-    def test_tokenize_comment_without_newline(self):
-        self.t.tokenize('#=')
-        self.assertEquals( self.t.tokens, ['#='] )
 
 
 class Test_Parser_parse(unittest.TestCase):
@@ -366,7 +222,7 @@ class Test_Parser_parse(unittest.TestCase):
         tokens.append('save_nef_nmr_meta_data')
         tokens.append('loop_')
         tokens.append('_nef_related_entries.database_name')
-        tokens.append('_nef_related_entrie.database_accession_code')
+        tokens.append('_nef_related_entrys.database_accession_code')
         tokens.append('BMRB')
         tokens.append('12345')
         tokens.append('stop_')
@@ -374,24 +230,339 @@ class Test_Parser_parse(unittest.TestCase):
 
         self.assertRaises(Exception, self.p.parse, tokens)
 
-    def _test_parse_loops_mismatched_column_names_non_strict(self):
-        tokens = ['data_nef_my_nmr_project']
-        tokens.append('save_nef_nmr_meta_data')
-        tokens.append('loop_')
-        tokens.append('_nef_related_entries.database_name')
-        tokens.append('_nef_related_entrie.database_accession_code')
-        tokens.append('BMRB')
-        tokens.append('12345')
-        tokens.append('stop_')
-        tokens.append('save_')
+    def test_parse_loops_mismatched_column_names_non_strict(self):
+        with patch('NEFreader.parser.logger') as l:
+            tokens = ['data_nef_my_nmr_project']
+            tokens.append('save_nef_nmr_meta_data')
+            tokens.append('loop_')
+            tokens.append('_nef_related_entries.database_name')
+            tokens.append('_nef_related_entrys.database_accession_code')
+            tokens.append('BMRB')
+            tokens.append('12345')
+            tokens.append('stop_')
+            tokens.append('save_')
 
-        self.p.strict = False
-        self.p.parse(tokens)
+            self.p.strict = False
+            self.p.parse(tokens)
 
-        self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries']
-                                       [0]['database_name'], 'database_accession_code')
-        self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries']
-                                       [0]['BMRB'], '12345')
+            self.assertTrue(l.warning.called)
+            self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries']
+                                           [0]['database_name'], 'BMRB')
+            self.assertEquals(self.p.target['nef_nmr_meta_data']['nef_related_entries']
+                                           [0]['database_accession_code'], '12345')
+
+class Test_bare_nef(unittest.TestCase):
+
+    def setUp(self):
+        self.nef = NEFreader.Nef()
+
+
+    def test_bare_nef_data_block(self):
+        self.assertEqual(self.nef.datablock, 'DEFAULT')
+
+    def test_bare_nef_metadata_structure(self):
+        metadata = self.nef['nef_nmr_meta_data']
+        self.assertIn('sf_category', metadata)
+        self.assertIn('sf_framecode', metadata)
+        self.assertEqual(metadata['sf_category'], metadata['sf_framecode'])
+        self.assertIn('format_name', metadata)
+        self.assertIn('format_version', metadata)
+        self.assertIn('program_name', metadata)
+        self.assertIn('program_version', metadata)
+        self.assertIn('creation_date', metadata)
+        self.assertIn('uuid', metadata)
+
+    def test_bare_nef_molecular_system_structure(self):
+        molecularSystem = self.nef['nef_molecular_system']
+        self.assertIn('sf_category', molecularSystem)
+        self.assertIn('sf_framecode', molecularSystem)
+        self.assertEqual(molecularSystem['sf_category'], molecularSystem['sf_framecode'])
+
+    def test_bare_nef_molecular_system_structure(self):
+        chemicalShiftList = self.nef['nef_chemical_shift_list_1']
+        self.assertIn('sf_category', chemicalShiftList)
+        self.assertIn('sf_framecode', chemicalShiftList)
+        self.assertEqual(chemicalShiftList['sf_category']+'_1',
+                         chemicalShiftList['sf_framecode'])
+
+
+class Test_nef_validators(unittest.TestCase):
+
+    def setUp(self):
+        self.nef = NEFreader.Nef()
+        self.v = NEFreader.Validator(self.nef)
+
+
+    def test_full_validation(self):
+        self.assertFalse(self.v.isValid())
+
+        nef_sequence_item = {'chain_code': 'A',
+                             'sequence_code': '1',
+                             'residue_type': 'ALA',
+                             'linking': '.',
+                             'residue_variant': '.'}
+        self.nef['nef_molecular_system']['nef_sequence'].append(nef_sequence_item)
+
+        self.assertTrue(self.v.isValid())
+
+
+    def test_missing_mandatory_datablock_label(self):
+        self.assertIsNone(self.v._validate_datablock()['DATABLOCK'])
+
+        del(self.nef.datablock)
+
+        self.assertIsNotNone(self.v._validate_datablock()['DATABLOCK'])
+
+
+    def test_missing_mandatory_saveframes(self):
+        self.assertEqual(self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'], [])
+
+        del(self.nef['nef_nmr_meta_data'])
+        del(self.nef['nef_molecular_system'])
+        del(self.nef['nef_chemical_shift_list_1'])
+
+        self.assertIn('No nef_nmr_meta_data saveframe',
+                      self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
+        self.assertIn('No nef_molecular_system saveframe',
+                      self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
+        self.assertIn('No nef_chemical_shift_list saveframe(s)',
+                      self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
+
+
+    def test_missing_mandatory_metadata(self):
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+        del(self.nef['nef_nmr_meta_data']['sf_category'])
+        del(self.nef['nef_nmr_meta_data']['sf_framecode'])
+        del(self.nef['nef_nmr_meta_data']['format_name'])
+        del(self.nef['nef_nmr_meta_data']['format_version'])
+        del(self.nef['nef_nmr_meta_data']['program_name'])
+        del(self.nef['nef_nmr_meta_data']['program_version'])
+        del(self.nef['nef_nmr_meta_data']['creation_date'])
+        del(self.nef['nef_nmr_meta_data']['uuid'])
+
+        self.assertIn('No sf_category', self.v._validate_metadata()['METADATA'])
+        self.assertIn('No sf_framecode', self.v._validate_metadata()['METADATA'])
+        self.assertIn('No format_name', self.v._validate_metadata()['METADATA'])
+        self.assertIn('No format_version', self.v._validate_metadata()['METADATA'])
+        self.assertIn('No program_name', self.v._validate_metadata()['METADATA'])
+        self.assertIn('No program_version', self.v._validate_metadata()['METADATA'])
+        self.assertIn('No creation_date', self.v._validate_metadata()['METADATA'])
+        self.assertIn('No uuid', self.v._validate_metadata()['METADATA'])
+
+
+    def test_allowed_fields_in_metadata(self):
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+        self.nef['nef_nmr_meta_data']['test'] = None
+
+        self.assertIn('"test" field not allowed',
+                      self.v._validate_metadata()['METADATA'])
+
+
+    def test_optional_related_database_entries_loop_in_metadata(self):
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+        self.nef['nef_nmr_meta_data']['nef_related_entries'] = [{'test': 'invalid'}]
+
+        self.assertIn('nef_nmr_meta_data:related_entries entry 1: no database_name',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:related_entries entry 1: no database_accession_code',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:related_entries entry 1: "test" field not allowed.',
+                      self.v._validate_metadata()['METADATA'])
+
+
+    def test_optional_program_script_loop_in_metadata(self):
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+        self.nef['nef_nmr_meta_data']['nef_program_script'] = [{'test': 'invalid'}]
+
+        self.assertIn('nef_nmr_meta_data:program_script entry 1: no program_name',
+                      self.v._validate_metadata()['METADATA'])
+
+
+    def test_optional_run_history_loop_in_metadata(self):
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+        self.nef['nef_nmr_meta_data']['nef_program_script'] = [{'test': 'invalid'}]
+
+        self.assertIn('nef_nmr_meta_data:program_script entry 1: no program_name',
+                      self.v._validate_metadata()['METADATA'])
+
+
+    def test_missing_mandatory_nef_molecular_system(self):
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
+                         ['empty nef_sequence'])
+
+        del(self.nef['nef_molecular_system']['sf_category'])
+        del(self.nef['nef_molecular_system']['sf_framecode'])
+        del(self.nef['nef_molecular_system']['nef_sequence'])
+
+        self.assertIn('No sf_category', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('No sf_framecode', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('No nef_sequence loop', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+
+
+    def test_missing_mandatory_nef_sequence_columns(self):
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
+                         ['empty nef_sequence'])
+
+        seq = self.nef['nef_molecular_system']['nef_sequence']
+        seq.append({})
+
+        self.assertIn('nef_seqence entry 1: missing chain_code',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_seqence entry 1: missing sequence_code',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_seqence entry 1: missing residue_type',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_seqence entry 1: missing linking',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_seqence entry 1: missing residue_variant',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+
+
+    def test_mandatory_nef_sequence_in_molecular_system(self):
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
+                         ['empty nef_sequence'])
+        nef_sequence_item = {'chain_code': 'A',
+                             'sequence_code': '1',
+                             'residue_type': 'ALA',
+                             'linking': '.',
+                             'residue_variant': '.'}
+        self.nef['nef_molecular_system']['nef_sequence'].append(nef_sequence_item)
+
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],[])
+
+
+    def test_optional_cross_links_loop_in_molecular_system(self):
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
+                         ['empty nef_sequence'])
+        nef_sequence_item_1 = {'chain_code': 'A',
+                               'sequence_code': '1',
+                               'residue_type': 'ALA',
+                               'linking': '.',
+                               'residue_variant': '.'}
+        self.nef['nef_molecular_system']['nef_sequence'].append(nef_sequence_item_1)
+        nef_sequence_item_2 = {'chain_code': 'B',
+                               'sequence_code': '2',
+                               'residue_type': 'CYS',
+                               'linking': '.',
+                               'residue_variant': '.'}
+        self.nef['nef_molecular_system']['nef_sequence'].append(nef_sequence_item_2)
+
+        self.nef['nef_molecular_system']['nef_covalent_links'] = [{},]
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no chain_code_1',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no sequence_code_1',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no residue_type_1',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no atom_name_1',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no chain_code_2',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no sequence_code_2',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no residue_type_2',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no atom_name_2',
+                      self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+
+        nef_covalent_link = {'chain_code_1': 'A',
+                             'sequence_code_1': '1',
+                             'residue_type_1': 'ALA',
+                             'atom_name_1': 'N',
+                             'chain_code_2': 'B',
+                             'sequence_code_2': '2',
+                             'residue_type_2': 'CYS',
+                             'atom_name_2': 'SD',
+                             }
+        self.nef['nef_molecular_system']['nef_covalent_links'] = [nef_covalent_link,]
+
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],[])
+
+
+
+    def test_missing_mandatory_chemical_shift_list(self):
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+
+        sfc = self.nef['nef_chemical_shift_list_1']['sf_category']
+        del(self.nef['nef_chemical_shift_list_1']['sf_category'])
+        self.assertIn('No nef_chemical_shift_list saveframe(s)',
+            self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
+        self.nef['nef_chemical_shift_list_1']['sf_category'] = sfc
+
+        del(self.nef['nef_chemical_shift_list_1']['sf_framecode'])
+        del(self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'])
+
+        self.assertIn('nef_chemical_shift_list_1: No sf_framecode',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1: No nef_chemical_shift loop',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+
+
+    def test_missing_mandatory_nef_chemical_shift_list(self):
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+
+        sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift']
+        sl.append({})
+
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing chain_code',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing sequence_code',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing residue_type',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing atom_name',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing value',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+
+
+    def test_full_nef_chemical_shift_in_chemical_shift_list(self):
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+        nef_shift_item = {'chain_code': 'A',
+                          'sequence_code': '1',
+                          'residue_type': 'ALA',
+                          'atom_name': 'HA',
+                          'value': '5.0'}
+        sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'] = [nef_shift_item]
+
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+
+        sl[0]['value_uncertainty'] = '0.2'
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+
+        sl[0]['test'] = '0.2'
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'],
+                         ['nef_molecular_system:nef_covalent_links entry 1: "test" field not allowed.'])
+
+    def test_missing_mandatory_saveframe_fields(self):
+        self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
+
+        self.nef['generic_saveframe'] = {'sf_framecode': 'generic_saveframe',
+                                         'sf_category': 'generic'}
+        g = self.nef['generic_saveframe']
+        self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
+
+        del g['sf_framecode']
+        self.assertIn('No sf_framecode in generic_saveframe',
+                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
+
+        del g['sf_category']
+        self.assertIn('No sf_category in "generic_saveframe"',
+                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
+
+
+    def test_inconsistent_saveframe_names(self):
+        self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
+
+        self.nef['generic_saveframe'] = {'sf_framecode': 'generic'}
+
+        self.assertIn('sf_framecode "generic" does not match framecode name "generic_saveframe".',
+                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
 
 
 class Test_files(unittest.TestCase):
@@ -401,8 +572,9 @@ class Test_files(unittest.TestCase):
         self.t = NEFreader.Tokenizer()
         self.p = NEFreader.Parser(target=self.d)
 
-    def _test_annotated(self):
-        f_name = '/Users/tjr22/Documents/NEF/NEF/specification/Commented_Example.nef'
+    def test_annotated(self):
+        f_name = 'tests/test_files/Commented_Example.nef'
+
 
         with open(f_name, 'r') as f:
             nef = f.read()
@@ -410,29 +582,8 @@ class Test_files(unittest.TestCase):
         tokens = self.t.tokenize(nef)
         self.p.parse(tokens)
 
-        print(self.d.keys())
 
 
-class Test_nef(unittest.TestCase):
-
-    def setUp(self):
-        self.nef = NEFreader.Nef()
-
-
-    def _test_bare_nef(self):
-
-        print(self.nef.keys())
-
-
-    def _test_read_annotated_file(self):
-        f_name = 'test_files/Commented_Example.nef'
-
-        self.nef.open(f_name, strict=False)
-        print(self.nef)
-        for k,v in self.nef.items():
-            print(k)
-            print(v)
-            print()
 
 
 if __name__ == '__main__':

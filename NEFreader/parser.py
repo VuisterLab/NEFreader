@@ -5,6 +5,8 @@ __version__ = '0.1'
 from collections import OrderedDict
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class Tokenizer(object):
 
@@ -160,6 +162,8 @@ class Tokenizer(object):
         self._finish_token()
         self.tokens.append('\n')
         self._token = []
+
+
 
 
 
@@ -343,7 +347,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                logging.WARNING(error_message)
+                logger.warning(error_message)
 
 
     def _data_name_token(self, i, t):
@@ -420,7 +424,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                logging.WARNING(error_message)
+                logger.warning(error_message)
 
     def _end_saveframe_token(self, i):
         """
@@ -479,7 +483,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                logging.WARNING(error_message)
+                logger.warning(error_message)
         self._loop_data.append(self._loop_row)
         self.target[self._saveframe_name][self._loop_name] = self._loop_data
 
@@ -509,7 +513,7 @@ class Parser(object):
             if self.strict:
                 raise Exception(error_message)
             else:
-                logging.WARNING(error_message)
+                logger.warning(error_message)
         self._loop_columns.append(self._data_name.split('.')[1])
 
 
