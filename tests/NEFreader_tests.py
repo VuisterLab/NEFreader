@@ -365,11 +365,11 @@ class Test_nef_validators(unittest.TestCase):
 
         self.nef['nef_nmr_meta_data']['nef_related_entries'] = [{'test': 'invalid'}]
 
-        self.assertIn('nef_nmr_meta_data:related_entries entry 1: no database_name',
+        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: no database_name',
                       self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:related_entries entry 1: no database_accession_code',
+        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: no database_accession_code',
                       self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:related_entries entry 1: "test" field not allowed.',
+        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: "test" field not allowed',
                       self.v._validate_metadata()['METADATA'])
 
 
@@ -378,16 +378,46 @@ class Test_nef_validators(unittest.TestCase):
 
         self.nef['nef_nmr_meta_data']['nef_program_script'] = [{'test': 'invalid'}]
 
-        self.assertIn('nef_nmr_meta_data:program_script entry 1: no program_name',
+        self.assertIn('nef_nmr_meta_data:nef_program_script entry 1: no program_name',
                       self.v._validate_metadata()['METADATA'])
 
 
     def test_optional_run_history_loop_in_metadata(self):
         self.assertEqual(self.v._validate_metadata()['METADATA'], [])
 
-        self.nef['nef_nmr_meta_data']['nef_program_script'] = [{'test': 'invalid'}]
+        self.nef['nef_nmr_meta_data']['nef_run_history'] = [{'test': 'invalid'}]
 
-        self.assertIn('nef_nmr_meta_data:program_script entry 1: no program_name',
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no run_ordinal',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no program_name',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: "test" field not allowed',
+                      self.v._validate_metadata()['METADATA'])
+
+
+    def test_optional_run_history_loop_with_optional_fields_in_metadata(self):
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+        rh = self.nef['nef_nmr_meta_data']['nef_run_history'] = [{'run_ordinal': '1',
+                                                                  'program_name': 'test'},]
+        rh.append({'run_ordinal': '2', 'program_name': 'test2'})
+
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+        rh.append({'run_ordinal': '3', 'program_name': 'test3',
+                   'program_version':'1', 'script_name': 'test.script',
+                   'script': 'do stuff'}, )
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no program_version',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no script_name',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no script',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 2: no program_version',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 2: no script_name',
+                      self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 2: no script',
                       self.v._validate_metadata()['METADATA'])
 
 
@@ -509,19 +539,19 @@ class Test_nef_validators(unittest.TestCase):
         sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift']
         sl.append({})
 
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing chain_code',
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing chain_code',
                       self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing sequence_code',
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing sequence_code',
                       self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing residue_type',
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing residue_type',
                       self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing atom_name',
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing atom_name',
                       self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift_list entry 1: missing value',
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing value',
                       self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
 
 
-    def test_full_nef_chemical_shift_in_chemical_shift_list(self):
+    def _test_full_nef_chemical_shift_in_chemical_shift_list(self):
         self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
         nef_shift_item = {'chain_code': 'A',
                           'sequence_code': '1',
@@ -537,7 +567,35 @@ class Test_nef_validators(unittest.TestCase):
 
         sl[0]['test'] = '0.2'
         self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'],
-                         ['nef_molecular_system:nef_covalent_links entry 1: "test" field not allowed.'])
+                         ['nef_chemical_shift_list_1:nef_chemical_shift entry 1: "test" field not allowed'])
+
+
+    def test_mismatched_nef_chemical_shift_in_chemical_shift_list(self):
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+        nef_shift_item_1 = {'chain_code': 'A',
+                          'sequence_code': '1',
+                          'residue_type': 'ALA',
+                          'atom_name': 'HA',
+                          'value': '5.0'}
+        nef_shift_item_2 = {'chain_code': 'A',
+                          'sequence_code': '1',
+                          'residue_type': 'ALA',
+                          'atom_name': 'N',
+                          'value': '120'}
+        sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'] = [nef_shift_item_1,
+                                                                            nef_shift_item_2]
+
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+
+        sl[0]['value_uncertainty'] = '0.2'
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'],
+                         ['nef_chemical_shift_list_1:nef_chemical_shift entry 2: missing value_uncertainty'])
+
+        sl[0]['test'] = '0.2'
+        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'],
+                         ['nef_chemical_shift_list_1:nef_chemical_shift entry 1: "test" field not allowed',
+                          'nef_chemical_shift_list_1:nef_chemical_shift entry 2: missing value_uncertainty'])
+
 
     def test_missing_mandatory_saveframe_fields(self):
         self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
@@ -561,7 +619,7 @@ class Test_nef_validators(unittest.TestCase):
 
         self.nef['generic_saveframe'] = {'sf_framecode': 'generic'}
 
-        self.assertIn('sf_framecode "generic" does not match framecode name "generic_saveframe".',
+        self.assertIn('sf_framecode "generic" does not match framecode name "generic_saveframe"',
                       self.v._validate_saveframe_fields()['SAVEFRAMES'])
 
 
@@ -569,7 +627,7 @@ class Test_files(unittest.TestCase):
 
     def setUp(self):
         self.d = OrderedDict()
-        self.t = NEFreader.Tokenizer()
+        self.t = NEFreader.Lexer()
         self.p = NEFreader.Parser(target=self.d)
 
     def test_annotated(self):

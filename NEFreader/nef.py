@@ -1,7 +1,7 @@
 __author__ = 'tjr22'
 
 from collections import OrderedDict
-from .parser import Tokenizer, Parser
+from .parser import Lexer, Parser
 
 
 class Nef(OrderedDict):
@@ -64,10 +64,10 @@ class Nef(OrderedDict):
                            'sf_framecode']
     CSL_REQUIRED_LOOPS = ['nef_chemical_shift']
     CSL_CS_REQUIRED_FIELDS = ['chain_code',
-                          'sequence_code',
-                          'residue_type',
-                          'atom_name',
-                          'value']
+                              'sequence_code',
+                              'residue_type',
+                              'atom_name',
+                              'value']
     CSL_CS_OPTIONAL_FIELDS = ['value_uncertainty',]
 
 
@@ -113,7 +113,7 @@ class Nef(OrderedDict):
         :param file_like:
         :param strict: bool
         """
-        tokenizer = Tokenizer()
+        tokenizer = Lexer()
         parser = Parser(self)
 
         parser.strict = strict
@@ -192,7 +192,7 @@ class Validator(object):
                 e.append('No sf_framecode in {}'.format(k))
             else:
                 if v['sf_framecode'] != k:
-                    e.append('sf_framecode "{}" does not match framecode name "{}".'
+                    e.append('sf_framecode "{}" does not match framecode name "{}"'
                              .format(v['sf_framecode'], k))
             if 'sf_category' not in v:
                 e.append('No sf_category in "{}"'.format(k))
@@ -244,10 +244,10 @@ class Validator(object):
                     pass
                 else:
                     for n, v in enumerate(re):
-                        [e.append('nef_nmr_meta_data:related_entries entry {}: no {}'
+                        [e.append('nef_nmr_meta_data:nef_related_entries entry {}: no {}'
                                   .format(n+1, i))
                             for i in Nef.MD_RE_REQUIRED_FIELDS if i not in re]
-                        [e.append('nef_nmr_meta_data:related_entries entry {}: "{}" field not allowed.'
+                        [e.append('nef_nmr_meta_data:nef_related_entries entry {}: "{}" field not allowed'
                                   .format(n+1, j))
                             for j in v if j not in Nef.MD_RE_REQUIRED_FIELDS]
             if 'nef_program_script' in md:
@@ -256,7 +256,7 @@ class Validator(object):
                     pass
                 else:
                     for n, v in enumerate(ps):
-                        [e.append('nef_nmr_meta_data:program_script entry {}: no {}'
+                        [e.append('nef_nmr_meta_data:nef_program_script entry {}: no {}'
                                   .format(n+1, i))
                             for i in Nef.MD_PS_REQUIRED_FIELDS if i not in ps]
             if 'nef_run_history' in md:
@@ -264,12 +264,27 @@ class Validator(object):
                 if len(rh) == 0:
                     pass
                 else:
-                    for n, v in enumerate(rh):
-                        [e.append('nef_nmr_meta_data:nef_run_history entry {}: no {}'.format(n+1, i))
-                                for i in Nef.MD_RH_REQUIRED_FIELDS if i not in rh]
-                        rh_allowed = Nef.MD_RH_REQUIRED_FIELDS + Nef.MD_RH_OPTIONAL_FIELDS
-                        [e.append('nef_nmr_meta_data:nef_run_history entry {}: "{}" field not allowed.'
-                                  .format(n+1, j)) for j in v if j not in rh_allowed]
+                    required_fields = Nef.MD_RH_REQUIRED_FIELDS
+                    rf_count = len(required_fields)
+                    finished = False
+                    while not finished:
+                        finished = True
+                        for n, v in enumerate(rh):
+                            for field in v:
+                                if field not in required_fields:
+                                    if field in Nef.MD_RH_OPTIONAL_FIELDS:
+                                        required_fields.append(field)
+                                        break
+                                    else:
+                                        e.append('nef_nmr_meta_data:nef_run_history entry {}: "{}" field not allowed'
+                                                 .format(n+1, field))
+                            if len(required_fields) > rf_count:
+                                rf_count = len(required_fields)
+                                finished = False
+                                break
+                            for req in required_fields:
+                                if req not in v:
+                                    e.append('nef_nmr_meta_data:nef_run_history entry {}: no {}'.format(n+1, req))
             md_allowed = Nef.MD_REQUIRED_FIELDS
             md_allowed += Nef.MD_REQUIRED_LOOPS
             md_allowed += Nef.MD_OPTIONAL_FIELDS
@@ -332,11 +347,26 @@ class Validator(object):
                     e.append('{}: No nef_chemical_shift loop'.format(k))
                 elif len(v['nef_chemical_shift']) > 0:
                     sl = v['nef_chemical_shift']
-                    for n,s in enumerate(sl):
-                        [e.append('{}:nef_chemical_shift_list entry {}: missing {}'
-                                  .format(v['sf_framecode'], n+1, i))
-                            for i in Nef.CSL_CS_REQUIRED_FIELDS if i not in s]
-                        cs_allowed = Nef.CSL_CS_REQUIRED_FIELDS + Nef.CSL_CS_OPTIONAL_FIELDS
-                        [e.append('nef_molecular_system:nef_covalent_links entry {}: "{}" field not allowed.'
-                                      .format(n+1, j)) for j in s if j not in cs_allowed]
+                    required_fields = Nef.CSL_CS_REQUIRED_FIELDS
+                    rf_count = len(required_fields)
+                    finished = False
+                    while not finished:
+                        finished = True
+                        for n, s in enumerate(sl):
+                            for field in s:
+                                if field not in required_fields:
+                                    if field in Nef.CSL_CS_OPTIONAL_FIELDS:
+                                        required_fields.append(field)
+                                        break
+                                    else:
+                                        e.append('{}:nef_chemical_shift entry {}: "{}" field not allowed'
+                                                 .format(v['sf_framecode'], n+1, field))
+                            if len(required_fields) > rf_count:
+                                rf_count = len(required_fields)
+                                finished = False
+                                break
+                            for req in required_fields:
+                                if req not in s:
+                                    e.append('{}:nef_chemical_shift entry {}: missing {}'
+                                             .format(v['sf_framecode'], n+1, req))
         return errors

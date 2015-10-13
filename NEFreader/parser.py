@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Tokenizer(object):
+class Lexer(object):
 
     def __init__(self, chars=None):
         """
