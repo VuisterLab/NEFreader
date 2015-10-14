@@ -293,7 +293,7 @@ class Test_nef_validators(unittest.TestCase):
         self.v = NEFreader.Validator(self.nef)
 
 
-    def test_full_validation(self):
+    def _test_full_validation(self):
         self.assertFalse(self.v.isValid())
 
         nef_sequence_item = {'chain_code': 'A',
@@ -314,148 +314,282 @@ class Test_nef_validators(unittest.TestCase):
         self.assertIsNotNone(self.v._validate_datablock()['DATABLOCK'])
 
 
-    def test_missing_mandatory_saveframes(self):
-        self.assertEqual(self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'], [])
-
+    def test_missing_mandatory_saveframe__nef_nmr_meta_data(self):
         del(self.nef['nef_nmr_meta_data'])
+
+        self.assertEqual(['Missing nef_nmr_meta_data label.'],
+                      self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
+
+    def test_missing_mandatory_saveframe__nef_molecular_system(self):
         del(self.nef['nef_molecular_system'])
+
+        self.assertEqual(['Missing nef_molecular_system label.'],
+                      self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
+
+    def test_missing_mandatory_saveframe__nef_chemical_shift_list(self):
         del(self.nef['nef_chemical_shift_list_1'])
 
-        self.assertIn('No nef_nmr_meta_data saveframe',
-                      self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
-        self.assertIn('No nef_molecular_system saveframe',
-                      self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
-        self.assertIn('No nef_chemical_shift_list saveframe(s)',
+        self.assertEqual(['No saveframes with sf_category: nef_chemical_shift_list.'],
                       self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
 
 
-    def test_missing_mandatory_metadata(self):
-        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
 
+    # def test_inconsistent_saveframe_names(self):
+    #     self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
+    #
+    #     self.nef['generic_saveframe'] = {'sf_framecode': 'generic'}
+    #
+    #     self.assertIn('sf_framecode "generic" does not match framecode name "generic_saveframe"',
+    #                   self.v._validate_saveframe_fields()['SAVEFRAMES'])
+
+
+
+    def test_all_saveframes_have_mandatory_fields(self):
+        self.nef['generic_saveframe'] = {'sf_framecode': 'generic_saveframe',
+                                         'sf_category': 'generic'}
+
+        self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
+
+    def test_all_saveframes_have_mandatory_fields__framecode_missing(self):
+        self.nef['generic_saveframe'] = {'sf_category': 'generic'}
+
+        self.assertEqual(['generic_saveframe: missing sf_framecode label.'],
+                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
+
+    def test_all_saveframes_have_mandatory_fields__category_missing(self):
+        self.nef['generic_saveframe'] = {'sf_framecode': 'generic_saveframe'}
+
+        self.assertEqual(['generic_saveframe: missing sf_category label.'],
+                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
+
+
+    def test_missing_mandatory_metadata__sf_framecode(self):
+        del(self.nef['nef_nmr_meta_data'])
+
+        self.assertEqual('No nef_nmr_meta_data saveframe.',
+                         self.v._validate_metadata()['METADATA'])
+
+    def test_mismatch_metadata__sf_framecode(self):
+        self.nef['nef_nmr_meta_data']['sf_framecode'] = 'meta'
+
+        self.assertEqual(['sf_framecode meta must match key nef_nmr_meta_data.'],
+                         self.v._validate_metadata()['METADATA'])
+        self.assertEqual(['sf_framecode meta must match key nef_nmr_meta_data.'],
+                         self.v._validate_saveframe_fields()['SAVEFRAMES'])
+
+    def test_missing_mandatory_metadata__sf_category(self):
         del(self.nef['nef_nmr_meta_data']['sf_category'])
-        del(self.nef['nef_nmr_meta_data']['sf_framecode'])
+
+        self.assertEqual(['Missing sf_category label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+    def test_mismatch_metadata__sf_category(self):
+        self.nef['nef_nmr_meta_data']['sf_category'] = 'category'
+
+        self.assertEqual(['sf_category category must be nef_nmr_meta_data.'],
+                         self.v._validate_metadata()['METADATA'])
+
+
+    def test_missing_mandatory_metadata__format_name(self):
         del(self.nef['nef_nmr_meta_data']['format_name'])
+
+        self.assertEqual(['Missing format_name label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+    def test_mismatch_metadata__format_name(self):
+        self.nef['nef_nmr_meta_data']['format_name'] = 'format'
+
+        self.assertEqual(["format_name must be 'Nmr_Exchange_Format'."],
+                         self.v._validate_metadata()['METADATA'])
+
+
+    def test_missing_mandatory_metadata__format_version(self):
         del(self.nef['nef_nmr_meta_data']['format_version'])
+
+        self.assertEqual(['Missing format_version label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+    def test_mismatch_metadata__format_version(self):
+        self.nef['nef_nmr_meta_data']['format_version'] = '999'
+
+        self.assertEqual(["This reader does not support format version 999."],
+                         self.v._validate_metadata()['METADATA'])
+
+
+    def test_missing_mandatory_metadata__program_name(self):
         del(self.nef['nef_nmr_meta_data']['program_name'])
+
+        self.assertEqual(['Missing program_name label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+
+    def test_missing_mandatory_metadata__program_version(self):
         del(self.nef['nef_nmr_meta_data']['program_version'])
+
+        self.assertEqual(['Missing program_version label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+
+    def test_missing_mandatory_metadata__creation_date(self):
         del(self.nef['nef_nmr_meta_data']['creation_date'])
+
+        self.assertEqual(['Missing creation_date label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+
+    def test_missing_mandatory_metadata__uuid(self):
         del(self.nef['nef_nmr_meta_data']['uuid'])
 
-        self.assertIn('No sf_category', self.v._validate_metadata()['METADATA'])
-        self.assertIn('No sf_framecode', self.v._validate_metadata()['METADATA'])
-        self.assertIn('No format_name', self.v._validate_metadata()['METADATA'])
-        self.assertIn('No format_version', self.v._validate_metadata()['METADATA'])
-        self.assertIn('No program_name', self.v._validate_metadata()['METADATA'])
-        self.assertIn('No program_version', self.v._validate_metadata()['METADATA'])
-        self.assertIn('No creation_date', self.v._validate_metadata()['METADATA'])
-        self.assertIn('No uuid', self.v._validate_metadata()['METADATA'])
+        self.assertEqual(['Missing uuid label.'],
+                         self.v._validate_metadata()['METADATA'])
 
 
-    def test_allowed_fields_in_metadata(self):
-        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+    # def test_allowed_fields_in_metadata(self):
+    #     self.nef['nef_nmr_meta_data']['coordinate_file_name'] = ''
+    #     self.nef['nef_nmr_meta_data']['nef_related_entries'] = []
+    #     self.nef['nef_nmr_meta_data']['nef_program_script'] = []
+    #     self.nef['nef_nmr_meta_data']['nef_run_history'] = []
+    #
+    #     self.assertEqual([], self.v._validate_metadata()['METADATA'])
 
-        self.nef['nef_nmr_meta_data']['test'] = None
+    def test_nonallowed_fields_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['test'] = ''
 
-        self.assertIn('"test" field not allowed',
-                      self.v._validate_metadata()['METADATA'])
-
-
-    def test_optional_related_database_entries_loop_in_metadata(self):
-        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
-
-        self.nef['nef_nmr_meta_data']['nef_related_entries'] = [{'test': 'invalid'}]
-
-        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: no database_name',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: no database_accession_code',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: "test" field not allowed',
-                      self.v._validate_metadata()['METADATA'])
+        self.assertEqual(["Field 'test' not allowed in nef_nmr_meta_data."],
+                         self.v._validate_metadata()['METADATA'])
 
 
-    def test_optional_program_script_loop_in_metadata(self):
-        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
-
-        self.nef['nef_nmr_meta_data']['nef_program_script'] = [{'test': 'invalid'}]
-
-        self.assertIn('nef_nmr_meta_data:nef_program_script entry 1: no program_name',
-                      self.v._validate_metadata()['METADATA'])
+    def test_optional_coordinate_file_name_field_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['coordinate_file_name'] = ''
+        self.assertEqual([], self.v._validate_metadata()['METADATA'])
 
 
-    def test_optional_run_history_loop_in_metadata(self):
-        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+    def test_optional_nef_related_entries_loop_in_metadata_missing_fields(self):
+        self.nef['nef_nmr_meta_data']['nef_related_entries'] = [OrderedDict()]
 
-        self.nef['nef_nmr_meta_data']['nef_run_history'] = [{'test': 'invalid'}]
+        self.assertEqual(2, len(self.v._validate_metadata()['METADATA']))
+        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: missing database_name label.',
+                         self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_related_entries entry 1: missing database_accession_code label.',
+                         self.v._validate_metadata()['METADATA'])
 
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no run_ordinal',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no program_name',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: "test" field not allowed',
-                      self.v._validate_metadata()['METADATA'])
-
-
-    def test_optional_run_history_loop_with_optional_fields_in_metadata(self):
-        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
-
-        rh = self.nef['nef_nmr_meta_data']['nef_run_history'] = [{'run_ordinal': '1',
-                                                                  'program_name': 'test'},]
-        rh.append({'run_ordinal': '2', 'program_name': 'test2'})
+    def test_optional_nef_related_entries_loop_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['nef_related_entries'] = [{'database_name':'test',
+                                                                'database_accession_code':'1'},]
 
         self.assertEqual(self.v._validate_metadata()['METADATA'], [])
 
-        rh.append({'run_ordinal': '3', 'program_name': 'test3',
-                   'program_version':'1', 'script_name': 'test.script',
-                   'script': 'do stuff'}, )
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no program_version',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no script_name',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: no script',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 2: no program_version',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 2: no script_name',
-                      self.v._validate_metadata()['METADATA'])
-        self.assertIn('nef_nmr_meta_data:nef_run_history entry 2: no script',
-                      self.v._validate_metadata()['METADATA'])
+    def test_optional_nef_related_entries_loop_nonallowed_field_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['nef_related_entries'] = [{'database_name':'test',
+                                                                'database_accession_code':'1',
+                                                                'test':'test'}]
+
+        self.assertEqual(["Field 'test' not allowed in nef_nmr_meta_data:nef_related_entries entry 1."],
+                         self.v._validate_metadata()['METADATA'])
 
 
-    def test_missing_mandatory_nef_molecular_system(self):
+    def test_optional_nef_program_script_loop_in_metadata_missing_fields(self):
+        self.nef['nef_nmr_meta_data']['nef_program_script'] = [OrderedDict()]
+
+        self.assertEqual(['nef_nmr_meta_data:nef_program_script entry 1: missing program_name label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+    def test_optional_nef_program_script_loop_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['nef_program_script'] = [{'program_name':'test'},]
+
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+    def test_optional_nef_program_script_loop_inconsistent_keys_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['nef_program_script'] = [{'program_name':'test'},
+                                                            {'program_name':'test',
+                                                             'script_name':'test.script'}
+                                                             ]
+
+        self.assertEqual(['nef_nmr_meta_data:nef_program_script entry 1: missing script_name label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+
+    def _test_optional_nef_run_history_loop_in_metadata_missing_fields(self):
+        self.nef['nef_nmr_meta_data']['nef_run_history'] = [OrderedDict()]
+
+        self.assertEqual(2, len(self.v._validate_metadata()['METADATA']))
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: missing run_ordinal label.',
+                         self.v._validate_metadata()['METADATA'])
+        self.assertIn('nef_nmr_meta_data:nef_run_history entry 1: missing program_name label.',
+                         self.v._validate_metadata()['METADATA'])
+
+    def test_optional_nef_run_history_loop_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['nef_run_history'] = [{'run_ordinal':'1',
+                                                             'program_name':'test',
+                                                             'program_version':'1',
+                                                             'script_name':'test.script',
+                                                             'script':"""do stuff"""}]
+
+        self.assertEqual(self.v._validate_metadata()['METADATA'], [])
+
+    def test_optional_nef_run_history_loop_nonallowed_field_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['nef_run_history'] = [{'run_ordinal':'1',
+                                                             'program_name':'test',
+                                                             'test':'test'}]
+
+        self.assertEqual(["Field 'test' not allowed in nef_nmr_meta_data:nef_run_history entry 1."],
+                         self.v._validate_metadata()['METADATA'])
+
+    def test_optional_nef_run_history_loop_inconsistent_keys_in_metadata(self):
+        self.nef['nef_nmr_meta_data']['nef_run_history'] = [{'run_ordinal':'1',
+                                                             'program_name':'test'},
+                                                            {'run_ordinal':'2',
+                                                             'program_name':'test',
+                                                             'program_version':'1'}
+                                                             ]
+
+        self.assertEqual(['nef_nmr_meta_data:nef_run_history entry 1: missing program_version label.'],
+                         self.v._validate_metadata()['METADATA'])
+
+
+
+    def test_missing_mandatory_nef_molecular_system_category_label(self):
         self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
-                         ['empty nef_sequence'])
+                         ['Empty nef_sequence.'])
 
         del(self.nef['nef_molecular_system']['sf_category'])
+
+        self.assertIn('Missing sf_category label.', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+
+    def test_missing_mandatory_nef_molecular_system_framecode(self):
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
+                         ['Empty nef_sequence.'])
+
         del(self.nef['nef_molecular_system']['sf_framecode'])
+
+        self.assertIn('Missing sf_framecode label.', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+
+    def test_missing_mandatory_nef_molecular_system_nef_sequence(self):
+        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
+                         ['Empty nef_sequence.'])
+
         del(self.nef['nef_molecular_system']['nef_sequence'])
 
-        self.assertIn('No sf_category', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('No sf_framecode', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('No nef_sequence loop', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
+        self.assertIn('Missing nef_sequence label.', self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
 
 
     def test_missing_mandatory_nef_sequence_columns(self):
-        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
-                         ['empty nef_sequence'])
-
         seq = self.nef['nef_molecular_system']['nef_sequence']
         seq.append({})
 
-        self.assertIn('nef_seqence entry 1: missing chain_code',
+        self.assertIn('nef_molecular_system:nef_sequence entry 1: missing chain_code label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_seqence entry 1: missing sequence_code',
+        self.assertIn('nef_molecular_system:nef_sequence entry 1: missing sequence_code label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_seqence entry 1: missing residue_type',
+        self.assertIn('nef_molecular_system:nef_sequence entry 1: missing residue_type label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_seqence entry 1: missing linking',
+        self.assertIn('nef_molecular_system:nef_sequence entry 1: missing linking label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_seqence entry 1: missing residue_variant',
+        self.assertIn('nef_molecular_system:nef_sequence entry 1: missing residue_variant label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
 
 
     def test_mandatory_nef_sequence_in_molecular_system(self):
-        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
-                         ['empty nef_sequence'])
         nef_sequence_item = {'chain_code': 'A',
                              'sequence_code': '1',
                              'residue_type': 'ALA',
@@ -467,8 +601,6 @@ class Test_nef_validators(unittest.TestCase):
 
 
     def test_optional_cross_links_loop_in_molecular_system(self):
-        self.assertEqual(self.v._validate_molecular_system()['MOLECULAR_SYSTEM'],
-                         ['empty nef_sequence'])
         nef_sequence_item_1 = {'chain_code': 'A',
                                'sequence_code': '1',
                                'residue_type': 'ALA',
@@ -481,23 +613,23 @@ class Test_nef_validators(unittest.TestCase):
                                'linking': '.',
                                'residue_variant': '.'}
         self.nef['nef_molecular_system']['nef_sequence'].append(nef_sequence_item_2)
-
         self.nef['nef_molecular_system']['nef_covalent_links'] = [{},]
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no chain_code_1',
+
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing chain_code_1 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no sequence_code_1',
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing sequence_code_1 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no residue_type_1',
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing residue_type_1 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no atom_name_1',
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing atom_name_1 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no chain_code_2',
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing chain_code_2 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no sequence_code_2',
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing sequence_code_2 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no residue_type_2',
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing residue_type_2 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
-        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: no atom_name_2',
+        self.assertIn('nef_molecular_system:nef_covalent_links entry 1: missing atom_name_2 label.',
                       self.v._validate_molecular_system()['MOLECULAR_SYSTEM'])
 
         nef_covalent_link = {'chain_code_1': 'A',
@@ -515,112 +647,169 @@ class Test_nef_validators(unittest.TestCase):
 
 
 
-    def test_missing_mandatory_chemical_shift_list(self):
+    def test_missing_mandatory_chemical_shift_lists(self):
         self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
 
-        sfc = self.nef['nef_chemical_shift_list_1']['sf_category']
         del(self.nef['nef_chemical_shift_list_1']['sf_category'])
-        self.assertIn('No nef_chemical_shift_list saveframe(s)',
-            self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
-        self.nef['nef_chemical_shift_list_1']['sf_category'] = sfc
 
-        del(self.nef['nef_chemical_shift_list_1']['sf_framecode'])
+        self.assertEqual(['No saveframes with sf_category: nef_chemical_shift_list.'],
+            self.v._validate_required_saveframes()['REQUIRED_SAVEFRAMES'])
+        self.assertEqual(['No nef_chemical_shift_list saveframes found.'],
+            self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+
+
+    def test_missing_mandatory_chemical_shift_loop_in_chemical_shift_lists_list(self):
         del(self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'])
 
-        self.assertIn('nef_chemical_shift_list_1: No sf_framecode',
+        self.assertEqual(['nef_chemical_shift_list_1: missing nef_chemical_shift label.'],
+            self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+
+    def test_missing_mandatory_chemical_shift_loop_fields(self):
+        self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'] = [{}]
+
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing chain_code label.',
                       self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1: No nef_chemical_shift loop',
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing sequence_code label.',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing residue_type label.',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing atom_name label.',
+                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
+        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing value label.',
                       self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
 
-
-    def test_missing_mandatory_nef_chemical_shift_list(self):
-        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
-
-        sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift']
-        sl.append({})
-
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing chain_code',
-                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing sequence_code',
-                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing residue_type',
-                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing atom_name',
-                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-        self.assertIn('nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing value',
-                      self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'])
-
-
-    def _test_full_nef_chemical_shift_in_chemical_shift_list(self):
-        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+    def test_mandatory_chemical_shift_loop_fields(self):
         nef_shift_item = {'chain_code': 'A',
-                          'sequence_code': '1',
-                          'residue_type': 'ALA',
-                          'atom_name': 'HA',
-                          'value': '5.0'}
-        sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'] = [nef_shift_item]
+                            'sequence_code': '1',
+                            'residue_type': 'ALA',
+                            'atom_name': 'HA',
+                            'value': '5.0'}
+        sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'] = [nef_shift_item,]
 
         self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
 
         sl[0]['value_uncertainty'] = '0.2'
+
         self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
 
-        sl[0]['test'] = '0.2'
-        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'],
-                         ['nef_chemical_shift_list_1:nef_chemical_shift entry 1: "test" field not allowed'])
 
 
-    def test_mismatched_nef_chemical_shift_in_chemical_shift_list(self):
-        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
+    def test_mismatched_mandatory_chemical_shift_loop_fields(self):
         nef_shift_item_1 = {'chain_code': 'A',
-                          'sequence_code': '1',
-                          'residue_type': 'ALA',
-                          'atom_name': 'HA',
-                          'value': '5.0'}
+                            'sequence_code': '1',
+                            'residue_type': 'ALA',
+                            'atom_name': 'HA',
+                            'value': '5.0'}
         nef_shift_item_2 = {'chain_code': 'A',
-                          'sequence_code': '1',
-                          'residue_type': 'ALA',
-                          'atom_name': 'N',
-                          'value': '120'}
-        sl = self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'] = [nef_shift_item_1,
-                                                                            nef_shift_item_2]
+                            'sequence_code': '1',
+                            'residue_type': 'ALA',
+                            'atom_name': 'N',
+                            'value': '120',
+                            'value_uncertainty': '0.2'}
+        self.nef['nef_chemical_shift_list_1']['nef_chemical_shift'] = [nef_shift_item_1,
+                                                                       nef_shift_item_2]
 
-        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'], [])
-
-        sl[0]['value_uncertainty'] = '0.2'
         self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'],
-                         ['nef_chemical_shift_list_1:nef_chemical_shift entry 2: missing value_uncertainty'])
-
-        sl[0]['test'] = '0.2'
-        self.assertEqual(self.v._validate_chemical_shift_lists()['CHEMICAL_SHIFT_LISTS'],
-                         ['nef_chemical_shift_list_1:nef_chemical_shift entry 1: "test" field not allowed',
-                          'nef_chemical_shift_list_1:nef_chemical_shift entry 2: missing value_uncertainty'])
+                         ['nef_chemical_shift_list_1:nef_chemical_shift entry 1: missing value_uncertainty label.'])
 
 
-    def test_missing_mandatory_saveframe_fields(self):
-        self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
-
-        self.nef['generic_saveframe'] = {'sf_framecode': 'generic_saveframe',
-                                         'sf_category': 'generic'}
-        g = self.nef['generic_saveframe']
-        self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
-
-        del g['sf_framecode']
-        self.assertIn('No sf_framecode in generic_saveframe',
-                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
-
-        del g['sf_category']
-        self.assertIn('No sf_category in "generic_saveframe"',
-                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
-
-
-    def test_inconsistent_saveframe_names(self):
-        self.assertEqual(self.v._validate_saveframe_fields()['SAVEFRAMES'], [])
-
-        self.nef['generic_saveframe'] = {'sf_framecode': 'generic'}
-
-        self.assertIn('sf_framecode "generic" does not match framecode name "generic_saveframe"',
-                      self.v._validate_saveframe_fields()['SAVEFRAMES'])
+    #
+    # def test_mandatory_nef_distance_restraint_list(self):
+    #     self.assertEqual(self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'], [])
+    #
+    #     drl = self.nef['nef_distance_restraint_list_1'] = OrderedDict()
+    #     drl['sf_category'] = 'nef_distance_restraint_list'
+    #
+    #     self.assertEqual(self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'],
+    #                      ['nef_distance_restraint_list_1: missing sf_framecode',
+    #                       'nef_distance_restraint_list_1: missing potential_type',
+    #                       'nef_distance_restraint_list_1: missing nef_distance_restraint loop'])
+    #
+    #     drl['sf_framecode'] = 'nef_distance_restraint_list_1a'
+    #     drl['potential_type'] = 'square-well-parabolic-linear'
+    #     drl['nef_distance_restraint'] = []
+    #     self.assertEqual(self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'],
+    #                      ['nef_distance_restraint_list_1: Mismatched key and sf_framecode'])
+    #
+    #     drl['sf_framecode'] = 'nef_distance_restraint_list_1'
+    #     self.assertEqual(self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'], [])
+    #
+    #     dr = drl['nef_distance_restraint']
+    #     distance_restraint_1 = {'ordinal': '1',
+    #                            'restraint_id': '1',
+    #                            'chain_code_1': 'A',
+    #                            'sequence_code_1': '21',
+    #                            'residue_type_1': 'ALA',
+    #                            'atom_name_1': 'HB%',
+    #                            'chain_code_2': 'A',
+    #                            'sequence_code_2': '17',
+    #                            'residue_type_2': 'VAL',
+    #                            'atom_name_2': 'H',
+    #                            'weight': '1.00'}
+    #     distance_restraint_2 = {'ordinal': '2',
+    #                            'restraint_id': '1',
+    #                            'chain_code_1': 'A',
+    #                            'sequence_code_1': '21',
+    #                            'residue_type_1': 'ALA',
+    #                            'atom_name_1': 'HB%',
+    #                            'chain_code_2': 'A',
+    #                            'sequence_code_2': '18',
+    #                            'residue_type_2': 'VAL',
+    #                            'atom_name_2': 'H',
+    #                            'weight': '1.00'}
+    #     dr.append(distance_restraint_1)
+    #     dr.append(distance_restraint_2)
+    #
+    #     self.assertEqual(self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'], [])
+    #
+    #     distance_restraint_3 = {'ordinal': '3',
+    #                            'restraint_id': '1',
+    #                            'chain_code_1': 'A',
+    #                            'sequence_code_1': '21',
+    #                            'residue_type_1': 'ALA',
+    #                            'atom_name_1': 'HB%',
+    #                            'chain_code_2': 'A',
+    #                            'sequence_code_2': '18',
+    #                            'residue_type_2': 'VAL',
+    #                            'atom_name_2': 'H',
+    #                            'weight': '1.00',
+    #                            'restraint_combination_id': '.',
+    #                            'target_value': '.',
+    #                            'target_value_uncertainty': '.',
+    #                            'lower_linear_limit': '.',
+    #                            'lower_limit': '.',
+    #                            'upper_limit': '.',
+    #                            'upper_linear_limit': '.'}
+    #     dr.append(distance_restraint_3)
+    #
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 1: missing restraint_combination_id',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 1: missing target_value',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 1: missing target_value_uncertainty',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 1: missing lower_linear_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 1: missing lower_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 1: missing upper_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 1: missing upper_linear_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 2: missing restraint_combination_id',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 2: missing target_value',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 2: missing target_value_uncertainty',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 2: missing lower_linear_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 2: missing lower_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 2: missing upper_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
+    #     self.assertIn('nef_distance_restraint_list_1:nef_chemical_shift entry 2: missing upper_linear_limit',
+    #                   self.v._validate_distance_restraint_lists()['DISTANCE_RESTRAINT_LISTS'])
 
 
 class Test_files(unittest.TestCase):

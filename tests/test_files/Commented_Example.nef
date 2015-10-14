@@ -273,7 +273,7 @@ save_nef_chemical_shift_list_1
       
   # key: chain_code, sequence_code, atom_name
 
-      A	15	    GLY	    QA	    3.42	0.02
+      A	15	GLY	QA	 3.42	0.02
       A 17      VAL     HG%      0.73   0.02
       A 17      VAL     CG%     22.1    0.3
       A 18      PHE     HB2      2.87   0.02
@@ -853,12 +853,12 @@ save_nef_nmr_spectrum_dummy15d
       _nef_peak.residue_type_15
       _nef_peak.atom_name_15
       
-  #key: ordinal
+ # key: ordinal
 
- 1  1 7.3E7 5.1E6 3.3E7 1.1E6
-7.2 0.05 119.5 0.4 28.3 0.3 172.2 0.5 58.5 0.4 32.3 0.4 22.2 0.5 58.5 0.4 32.3 0.4 22.2 0.5 58.5 0.4 32.3 0.4 22.2 0.5 58.5 0.4 32.3 0.4
- A 19 LEU HN A 19 LEU N A 18 GLN C  A 19 LEU CA A 19 LEU CB A 19 LEU CG  A 19 LEU CD1 A 19 LEU CD2 A 19 LEU CG A 19 LEU CA A 19 LEU CB A 19 LEU CG A 18 GLN CA A 18 GLN CB A 18 GLN CG
-  _stop
+ 1  1 7.3E7 5.1E6 3.3E7 1.1E6  
+ 7.2 0.05 119.5 0.4 28.3 0.3 172.2 0.5 58.5 0.4 32.3 0.4 22.2 0.5 58.5 0.4 32.3 0.4 22.2 0.5 58.5 0.4 32.3 0.4 22.2 0.5 58.5 0.4 32.3 0.4  
+ A 19 LEU HN A 19 LEU N A 18 GLN C  A 19 LEU CA A 19 LEU CB A 19 LEU CG  A 19 LEU CD1 A 19 LEU CD2 A 19 LEU CG A 19 LEU CA A 19 LEU CB A 19 LEU CG A 18 GLN CA A 18 GLN CB A 18 GLN CG 
+  stop_
 
 save_
 
@@ -879,10 +879,10 @@ save_nef_peak_restraint_links
   _nef_peak_restraint_links.sf_framecode           		nef_peak_restraint_links
 
 loop_
-  _nef_peak_restraint_links.nmr_spectrum_id
-  _nef_peak_restraint_links.peak_id
-  _nef_peak_restraint_links.restraint_list_id
-  _nef_peak_restraint_links.restraint_id
+  _nef_peak_restraint_link.nmr_spectrum_id
+  _nef_peak_restraint_link.peak_id
+  _nef_peak_restraint_link.restraint_list_id
+  _nef_peak_restraint_link.restraint_id
   
   # key: nmr_spectrum_id, peak_id, restraint_list_id, restraint_id
   
