@@ -226,14 +226,17 @@ class Nef(OrderedDict):
         for l in Nef.MS_REQUIRED_LOOPS:
             self['nef_molecular_system'][l] = []
 
-        self['nef_chemical_shift_list_1'] = OrderedDict()
-        self['nef_chemical_shift_list_1'].update({k:'' for k in Nef.CSL_REQUIRED_FIELDS})
-        self['nef_chemical_shift_list_1']['sf_category'] = 'nef_chemical_shift_list'
-        self['nef_chemical_shift_list_1']['sf_framecode'] = 'nef_chemical_shift_list_1'
+        self.add_nef_chemical_shift_list('nef_chemical_shift_list_1')
+
+
+    def add_nef_chemical_shift_list(self, name):
+        self[name] = OrderedDict( )
+        self[name].update( { k: '' for k in Nef.CSL_REQUIRED_FIELDS } )
+        self[name][ 'sf_category' ] = 'nef_chemical_shift_list'
+        self[name][ 'sf_framecode' ] = 'nef_chemical_shift_list_1'
         for l in Nef.CSL_REQUIRED_LOOPS:
-            self['nef_chemical_shift_list_1'][l] = []
-
-
+            self[name][ l ] = [ ]
+        return self[name]
 
     def read(self, file_like, strict=True):
         """
@@ -533,48 +536,6 @@ class Validator(object):
         return errors
 
 
-
-    # def _validate_chemical_shift_lists(self, nef=None):
-    #     ERROR_KEY = 'CHEMICAL_SHIFT_LISTS'
-    #
-    #     if nef is None:
-    #         nef = self.nef
-    #     errors = {ERROR_KEY: []}
-    #     e = errors[ERROR_KEY]
-    #
-    #     for k,v in nef.items():
-    #         if (v['sf_category'] == 'nef_chemical_shift_list'):
-    #             if 'sf_framecode' not in v:
-    #                 e.append('{}: No sf_framecode'.format(k))
-    #             elif v['sf_framecode'] != k:
-    #                 e.append('{}: Mismatched key and sf_framecode'.format(k))
-    #             if 'nef_chemical_shift' not in v:
-    #                 e.append('{}: No nef_chemical_shift loop'.format(k))
-    #             elif len(v['nef_chemical_shift']) > 0:
-    #                 sl = v['nef_chemical_shift']
-    #                 required_fields = Nef.CSL_CS_REQUIRED_FIELDS
-    #                 rf_count = len(required_fields)
-    #                 finished = False
-    #                 while not finished:
-    #                     finished = True
-    #                     for n, s in enumerate(sl):
-    #                         for field in s:
-    #                             if field not in required_fields:
-    #                                 if field in Nef.CSL_CS_OPTIONAL_FIELDS:
-    #                                     required_fields.append(field)
-    #                                     break
-    #                                 else:
-    #                                     e.append('{}:nef_chemical_shift entry {}: "{}" field not allowed'
-    #                                              .format(v['sf_framecode'], n+1, field))
-    #                         if len(required_fields) > rf_count:
-    #                             rf_count = len(required_fields)
-    #                             finished = False
-    #                             break
-    #                         [e.append('{}:nef_chemical_shift entry {}: missing {}'
-    #                                   .format(v['sf_framecode'], n+1, req))
-    #                                   for req in required_fields if req not in s]
-    #     return errors
-
     def _validate_distance_restraint_lists(self, nef=None):
         ERROR_KEY = 'DISTANCE_RESTRAINT_LISTS'
 
@@ -583,42 +544,75 @@ class Validator(object):
         errors = {ERROR_KEY: []}
         e = errors[ERROR_KEY]
 
-        for k,v in nef.items():
-            if (v['sf_category'] == 'nef_distance_restraint_list'):
-                if 'sf_framecode' not in v:
-                    e.append('{}: missing sf_framecode'.format(k))
-                elif v['sf_framecode'] != k:
-                    e.append('{}: Mismatched key and sf_framecode'.format(k))
-                if 'potential_type' not in v:
-                    e.append('{}: missing potential_type'.format(k))
-                if 'nef_distance_restraint' not in v:
-                    e.append('{}: missing nef_distance_restraint loop'.format(k))
-                elif len(v['nef_distance_restraint']) > 0:
-                    dr = v['nef_distance_restraint']
-                    required_fields = Nef.DRL_DR_REQUIRED_FIELDS
-                    rf_count = len(required_fields)
-                    finished = False
-                    while not finished:
-                        finished = True
-                        for n, s in enumerate(dr):
-                            for field in s:
-                                if field not in required_fields:
-                                    if field in Nef.DRL_DR_OPTIONAL_FIELDS:
-                                        required_fields.append(field)
-                                        break
-                                    else:
-                                        e.append('{}:nef_distance_restraint entry {}: "{}" field not allowed'
-                                                 .format(v['sf_framecode'], n+1, field))
-                            if len(required_fields) > rf_count:
-                                rf_count = len(required_fields)
-                                finished = False
-                                break
-                            [e.append('{}:nef_chemical_shift entry {}: missing {}'
-                                      .format(v['sf_framecode'], n+1, req))
-                                      for req in required_fields if req not in s]
-                drl_allowed = Nef.DRL_REQUIRED_FIELDS
-                drl_allowed += Nef.DRL_REQUIRED_LOOPS
-                drl_allowed += Nef.DRL_OPTIONAL_FIELDS
-                [e.append('{}: "{}" field not allowed'.format(v['sf_category'], f))
-                 for f in v if f not in drl_allowed]
+        for saveframe_name, saveframe in nef.items():
+            if 'sf_category' in saveframe:
+                if saveframe['sf_category'] == 'nef_distance_restraint_list':
+                    e += self.__dict_missing_keys(saveframe,
+                                                  (Nef.DRL_REQUIRED_FIELDS +
+                                                   Nef.DRL_REQUIRED_LOOPS),
+                                                  label = saveframe_name)
+                    e += self.__dict_nonallowed_keys(saveframe, (Nef.DRL_REQUIRED_FIELDS +
+                                                                 Nef.DRL_REQUIRED_LOOPS +
+                                                                 Nef.DRL_OPTIONAL_FIELDS),
+                                                                 label = saveframe_name)
+
+                    if 'nef_distance_restraint' in saveframe:
+                        for i, entry in enumerate(saveframe['nef_distance_restraint']):
+                            label = '{}:nef_distance_restraint entry {}'.format(saveframe_name, i+1)
+                            e += self.__dict_missing_keys(entry, Nef.DRL_DR_REQUIRED_FIELDS, label = label)
+                            e += self.__dict_nonallowed_keys(entry,
+                                                             (Nef.DRL_DR_REQUIRED_FIELDS +
+                                                              Nef.DRL_DR_OPTIONAL_FIELDS),
+                                                             label = label)
+                        e += self.__loop_entries_inconsistent_keys(saveframe['nef_distance_restraint'],
+                                                                   label='{}:nef_distance_restraint'.format(saveframe_name))
         return errors
+
+
+    # def _validate_distance_restraint_lists(self, nef=None):
+    #     ERROR_KEY = 'DISTANCE_RESTRAINT_LISTS'
+    #
+    #     if nef is None:
+    #         nef = self.nef
+    #     errors = {ERROR_KEY: []}
+    #     e = errors[ERROR_KEY]
+    #
+    #     for k,v in nef.items():
+    #         if (v['sf_category'] == 'nef_distance_restraint_list'):
+    #             if 'sf_framecode' not in v:
+    #                 e.append('{}: missing sf_framecode'.format(k))
+    #             elif v['sf_framecode'] != k:
+    #                 e.append('{}: Mismatched key and sf_framecode'.format(k))
+    #             if 'potential_type' not in v:
+    #                 e.append('{}: missing potential_type'.format(k))
+    #             if 'nef_distance_restraint' not in v:
+    #                 e.append('{}: missing nef_distance_restraint loop'.format(k))
+    #             elif len(v['nef_distance_restraint']) > 0:
+    #                 dr = v['nef_distance_restraint']
+    #                 required_fields = Nef.DRL_DR_REQUIRED_FIELDS
+    #                 rf_count = len(required_fields)
+    #                 finished = False
+    #                 while not finished:
+    #                     finished = True
+    #                     for n, s in enumerate(dr):
+    #                         for field in s:
+    #                             if field not in required_fields:
+    #                                 if field in Nef.DRL_DR_OPTIONAL_FIELDS:
+    #                                     required_fields.append(field)
+    #                                     break
+    #                                 else:
+    #                                     e.append('{}:nef_distance_restraint entry {}: "{}" field not allowed'
+    #                                              .format(v['sf_framecode'], n+1, field))
+    #                         if len(required_fields) > rf_count:
+    #                             rf_count = len(required_fields)
+    #                             finished = False
+    #                             break
+    #                         [e.append('{}:nef_chemical_shift entry {}: missing {}'
+    #                                   .format(v['sf_framecode'], n+1, req))
+    #                                   for req in required_fields if req not in s]
+    #             drl_allowed = Nef.DRL_REQUIRED_FIELDS
+    #             drl_allowed += Nef.DRL_REQUIRED_LOOPS
+    #             drl_allowed += Nef.DRL_OPTIONAL_FIELDS
+    #             [e.append('{}: "{}" field not allowed'.format(v['sf_category'], f))
+    #              for f in v if f not in drl_allowed]
+    #     return errors
