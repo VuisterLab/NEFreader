@@ -2,4 +2,5 @@ from __future__ import print_function, absolute_import, division, unicode_litera
 __author__ = 'TJ Ragan'
 
 from .parser import Lexer, Parser
-from .nef import Nef, Validator
+from .nef import Nef
+from .validator import Validator

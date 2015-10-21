@@ -2,10 +2,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 __author__ = 'TJ Ragan'
 
 import unittest
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
 
 import NEFreader
 
