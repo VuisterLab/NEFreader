@@ -255,7 +255,7 @@ class Nef(OrderedDict):
         del self.datablock
         del self['nef_nmr_meta_data']
         del self['nef_molecular_system']
-        del self['nef_chemical_shift_list']
+        del self['nef_chemical_shift_list_1']
 
         parser.parse(tokenizer.tokenize(file_like))
 
