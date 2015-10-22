@@ -327,7 +327,11 @@ class Validator(object):
                                                                  Nef.PL_REQUIRED_LOOPS +
                                                                  Nef.PL_OPTIONAL_FIELDS),
                                                                  label = saveframe_name)
-
+                    if 'chemical_shift_list' in saveframe:
+                        csl = saveframe['chemical_shift_list']
+                        if csl not in nef:
+                            e.append('{}: missing chemical_shift_list {}.'
+                                     .format(saveframe['sf_framecode'],csl))
                     if 'nef_spectrum_dimension' in saveframe:
                         for i, entry in enumerate(saveframe['nef_spectrum_dimension']):
                             label = '{}:nef_rdc_restraint_list entry {}'.format(saveframe_name, i+1)

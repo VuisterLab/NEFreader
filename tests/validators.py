@@ -722,7 +722,7 @@ class Test_nef_validators(unittest.TestCase):
                       self.v._validate_rdc_restraint_lists()['RDC_RESTRAINT_LISTS'])
 
 
-    def test_nef_peak_list(self):
+    def _test_nef_peak_list(self):
         self.assertEqual(self.v._validate_peak_lists()['PEAK_LISTS'], [])
 
         npl = self.nef['nef_nmr_spectrum_cnoesy1'] = OrderedDict()
@@ -745,6 +745,31 @@ class Test_nef_validators(unittest.TestCase):
         npl['nef_peak'] = []
 
         self.assertEqual(self.v._validate_peak_lists()['PEAK_LISTS'], [])
+
+    def test_nef_peak_list_missing_chemical_shift_list(self):
+        self.assertEqual(self.v._validate_peak_lists()['PEAK_LISTS'], [])
+
+        npl = self.nef['nef_nmr_spectrum_cnoesy1'] = OrderedDict()
+        npl['sf_category'] = 'nef_nmr_spectrum'
+
+        self.assertIn('nef_nmr_spectrum_cnoesy1: missing sf_framecode label.',
+                      self.v._validate_peak_lists()['PEAK_LISTS'])
+        self.assertIn('nef_nmr_spectrum_cnoesy1: missing num_dimensions label.',
+                      self.v._validate_peak_lists()['PEAK_LISTS'])
+        self.assertIn('nef_nmr_spectrum_cnoesy1: missing chemical_shift_list label.',
+                      self.v._validate_peak_lists()['PEAK_LISTS'])
+
+        npl['sf_framecode'] = 'nef_nmr_spectrum_cnoesy1'
+        npl['num_dimensions'] = '3'
+        npl['chemical_shift_list'] = 'nef_chemical_shift_list_2'
+        npl['experiment_classification'] = 'H_H[N].through-space'
+        npl['experiment_type'] = '15N-NOESY-HSQC'
+        npl['nef_spectrum_dimension'] = []
+        npl['nef_spectrum_dimension_transfer'] = []
+        npl['nef_peak'] = []
+
+        self.assertEqual(self.v._validate_peak_lists()['PEAK_LISTS'],
+                         ['nef_nmr_spectrum_cnoesy1: missing chemical_shift_list nef_chemical_shift_list_2.'])
 
     def test_nef_peak_list_spectrum_dimension_loop(self):
         self.assertEqual(self.v._validate_peak_lists()['PEAK_LISTS'], [])
@@ -827,6 +852,7 @@ class Test_nef_validators(unittest.TestCase):
         pdt.append(spectrum_dimension_transfer_2)
         self.assertEqual(self.v._validate_peak_lists()['PEAK_LISTS'],
                          ['nef_nmr_spectrum_cnoesy1:nef_spectrum_dimension_transfer item 0: missing is_indirect label.'])
+
 
     def test_nef_peak_list_peak_loop(self):
         self.assertEqual(self.v._validate_peak_lists()['PEAK_LISTS'], [])
