@@ -5,6 +5,8 @@ __version__ = '0.1'
 from collections import OrderedDict
 import logging
 
+from .validator import Validator
+
 logger = logging.getLogger(__name__)
 
 
@@ -187,6 +189,41 @@ class Parser(object):
             self.target = target
             self.no_target = False
 
+
+    def read(self, file_like, strict=True):
+        """
+        Populate the NEF object from a file-like object
+
+        :param file_like:
+        :param strict: bool
+        """
+        tokenizer = Lexer()
+
+        self.strict = strict
+        self.parse(tokenizer.tokenize(file_like))
+
+        validator = Validator(self.target)
+        if not validator.isValid():
+            print(validator.validation_errors)
+        return self.target
+
+
+    def load(self, filename=None, strict=True):
+        """
+        Open a file on disk and use it to populate the NEF object.
+
+        :param filename: str
+        :param strict: bool
+        """
+
+        if filename is None:
+            filename = self.input_filename
+        else:
+            self.input_filename = filename
+
+        with open(filename, 'r') as f:
+            self.read(f.read(), strict=strict)
+        return self.target
 
 
     def parse(self, tokens=None):

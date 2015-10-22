@@ -1,7 +1,7 @@
 __author__ = 'tjr22'
 
 from collections import OrderedDict
-from .parser import Lexer, Parser
+# from .parser import Lexer, Parser
 
 MAJOR_VERSION = '0'
 MINOR_VERSION = '8'
@@ -238,48 +238,6 @@ class Nef(OrderedDict):
             self['nef_molecular_system'][l] = []
 
         self.add_chemical_shift_list('nef_chemical_shift_list_1', 'ppm')
-
-
-    def read(self, file_like, strict=True):
-        """
-        Populate the NEF object from a file-like object
-
-        :param file_like:
-        :param strict: bool
-        """
-        tokenizer = Lexer()
-        parser = Parser(self)
-
-        parser.strict = strict
-
-        del self.datablock
-        del self['nef_nmr_meta_data']
-        del self['nef_molecular_system']
-        del self['nef_chemical_shift_list_1']
-
-        parser.parse(tokenizer.tokenize(file_like))
-
-        # validator = Validator()
-        # validation_problems = validator.validate(self)
-        # if len(validation_problems) > 0:
-        #     print(validation_problems)
-
-
-    def load(self, filename=None, strict=True):
-        """
-        Open a file on disk and use it to populate the NEF object.
-
-        :param filename: str
-        :param strict: bool
-        """
-
-        if filename is None:
-            filename = self.input_filename
-        else:
-            self.input_filename = filename
-
-        with open(filename, 'r') as f:
-            self.read(f.read(), strict=strict)
 
 
     ### Convenience Functions ###
