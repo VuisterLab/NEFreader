@@ -21,6 +21,10 @@ def _dataValueText(saveframe, dataLabel):
     template = '{}'
     if '\n' in saveframe[dataLabel]:
         template = ';\n{}\n;\n'
+    elif '"' in saveframe[dataLabel]:
+        template = "'{}'"
+    elif "'" in saveframe[dataLabel]:
+        template = '"{}"'
     return template.format(saveframe[dataLabel])
 
 
@@ -88,13 +92,21 @@ def _loopText(saveframe, loopName, strict=True):
 
 def _adjustTemplate(baseLoopRowTextTemplate, loopRow):
     for k, v in loopRow.items():
+        quoteString = None
         if '\n' in v:
+            quoteString = '\n;\n'
+        elif '"' in v:
+            quoteString = "'"
+        elif "'" in v:
+            quoteString = '"'
+
+        if quoteString is not None:
             topSplit = baseLoopRowTextTemplate.find(k)-1
             bottomSplit = topSplit + len(k) + 2
             loopRowTextTemplate = baseLoopRowTextTemplate[:topSplit]
-            loopRowTextTemplate += '\n;\n'
+            loopRowTextTemplate += quoteString
             loopRowTextTemplate += baseLoopRowTextTemplate[topSplit:bottomSplit]
-            loopRowTextTemplate += '\n;\n'
+            loopRowTextTemplate += quoteString
             loopRowTextTemplate += baseLoopRowTextTemplate[bottomSplit:]
             return loopRowTextTemplate
     return baseLoopRowTextTemplate
