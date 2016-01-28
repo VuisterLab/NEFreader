@@ -33,7 +33,7 @@ class Test_bare_nef(unittest.TestCase):
         self.assertIn('sf_framecode', molecularSystem)
         self.assertEqual(molecularSystem['sf_category'], molecularSystem['sf_framecode'])
 
-    def test_bare_nef_molecular_system_structure(self):
+    def test_bare_chemical_shift_list_structure(self):
         chemicalShiftList = self.nef['nef_chemical_shift_list_1']
         self.assertIn('sf_category', chemicalShiftList)
         self.assertIn('sf_framecode', chemicalShiftList)
