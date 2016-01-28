@@ -267,7 +267,7 @@ class Parser(object):
         :raise Exception:
         """
         if not hasattr(self.target, 'datablock'):
-            self.target.datablock = t
+            self.target.datablock = t[5:]
             self._state = 'start'
         else:
             raise Exception('Multiple datablocks not allowed.')

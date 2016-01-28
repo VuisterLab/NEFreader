@@ -1,11 +1,15 @@
 __author__ = 'tjr22'
 
 from collections import OrderedDict
+
 from .parser import Lexer, Parser
+from .writer import nefToText
 
 MAJOR_VERSION = '0'
 MINOR_VERSION = '8'
-__version__ = '.'.join((MAJOR_VERSION, MINOR_VERSION))
+PATCH_LEVEL = '1'
+__nef_version__ = '.'.join( (MAJOR_VERSION, MINOR_VERSION) )
+__version__ = '.'.join( (__nef_version__, PATCH_LEVEL) )
 
 class Nef(OrderedDict):
     """
@@ -226,7 +230,7 @@ class Nef(OrderedDict):
         self['nef_nmr_meta_data']['sf_category'] = 'nef_nmr_meta_data'
         self['nef_nmr_meta_data']['sf_framecode'] = 'nef_nmr_meta_data'
         self['nef_nmr_meta_data']['format_name'] = 'Nmr_Exchange_Format'
-        self['nef_nmr_meta_data']['format_version'] = __version__
+        self['nef_nmr_meta_data']['format_version'] = __nef_version__
         # for l in Nef.MD_REQUIRED_LOOPS:
         #     self['nef_nmr_meta_data'][l] = []
 
@@ -252,6 +256,10 @@ class Nef(OrderedDict):
 
         parser.strict = strict
 
+        for k in self.keys():
+            del self[k]
+
+        self.initialize()
         del self.datablock
         del self['nef_nmr_meta_data']
         del self['nef_molecular_system']
@@ -280,6 +288,26 @@ class Nef(OrderedDict):
 
         with open(filename, 'r') as f:
             self.read(f.read(), strict=strict)
+
+
+    def write(self, file_like):
+        import time
+        import random
+
+        self['nef_nmr_meta_data']['format_version'] = __nef_version__
+        if self['nef_nmr_meta_data']['program_name'] == '':
+            self['nef_nmr_meta_data']['program_name'] = 'NEFreader'
+            self['nef_nmr_meta_data']['program_version'] = __version__
+        self['nef_nmr_meta_data']['creation_date'] = time.strftime('%Y-%m-%dT%H:%M:%s')
+        self['nef_nmr_meta_data']['uuid'] = '-'.join((self['nef_nmr_meta_data']['program_name'],
+                                                      self['nef_nmr_meta_data']['creation_date'],
+                                                      str(hash(self))[:7]
+                                                     ))
+        file_like.write(nefToText(self))
+
+    def save(self, filename):
+        with open(filename, 'w') as f:
+            self.write(f)
 
 
     ### Convenience Functions ###

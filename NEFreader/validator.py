@@ -5,7 +5,7 @@ __author__ = 'TJ Ragan'
 import re
 
 from .nef import Nef
-from .nef import __version__
+from .nef import __nef_version__
 
 class Validator(object):
 
@@ -99,7 +99,7 @@ class Validator(object):
                     e.append("format_name must be 'Nmr_Exchange_Format'.")
             if 'format_version' in md:
                 major_version = md['format_version'].split('.')[0]
-                if major_version != __version__.split('.')[0]:
+                if major_version != __nef_version__.split( '.' )[0 ]:
                     e.append('This reader does not support format version {}.'.format(major_version))
             if 'creation_date' in md:
                 pass # TODO: How to validate the creation date?
