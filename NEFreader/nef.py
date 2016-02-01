@@ -256,9 +256,7 @@ class Nef(OrderedDict):
 
         parser.strict = strict
 
-        for k in self.keys():
-            del self[k]
-
+        self.clear()
         self.initialize()
         del self.datablock
         del self['nef_nmr_meta_data']
