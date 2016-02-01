@@ -5,8 +5,6 @@ __version__ = '0.1'
 from collections import OrderedDict
 import logging
 
-from .validator import Validator
-
 logger = logging.getLogger(__name__)
 
 
@@ -202,9 +200,6 @@ class Parser(object):
         self.strict = strict
         self.parse(tokenizer.tokenize(file_like))
 
-        validator = Validator(self.target)
-        if not validator.isValid():
-            print(validator.validation_errors)
         return self.target
 
 
