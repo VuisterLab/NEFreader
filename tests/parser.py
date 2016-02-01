@@ -25,7 +25,7 @@ class Test_Parser(unittest.TestCase):
     def test_parser_parse_with_predefined_tokens(self):
         p = NEFreader.Parser(tokens=['data_nef_my_nmr_project'])
         d = p.parse()
-        self.assertEquals(d.datablock, 'data_nef_my_nmr_project')
+        self.assertEquals(d.datablock, 'nef_my_nmr_project')
 
     def test_parse_whitespace(self):
         self.p.parse(['\n'])
