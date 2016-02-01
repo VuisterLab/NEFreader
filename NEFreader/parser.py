@@ -5,8 +5,6 @@ __version__ = '0.1'
 from collections import OrderedDict
 import logging
 
-from .validator import Validator
-
 logger = logging.getLogger(__name__)
 
 
@@ -87,6 +85,7 @@ class Lexer(object):
 
     def _start_quote(self, c):
         self._quote_char = c
+        self._token = [c]
         self._state = 'quoted'
 
     def _actual_character(self, c):
@@ -121,7 +120,7 @@ class Lexer(object):
 
 
     def _potential_unquote(self):
-        self._token = self._token[:-1]
+        self._token = self._token
         self._finish_token()
         self._state = 'start'
 
@@ -142,13 +141,14 @@ class Lexer(object):
 
     def _start_semicolon_comment(self):
         self._state = 'semicolon comment'
-
+        self._token = [';']
 
     def _continue_semicolon_comment(self, c):
         self._token.append(c)
 
 
     def _finish_semicolon_comment(self):
+        self._token.append(';')
         self._finish_token()
         self._state = 'start'
 
@@ -160,7 +160,7 @@ class Lexer(object):
     def _uncommented_newline(self):
         if len(self._token) > 0:
             if self._state == 'potential unquote':
-                self._token = self._token[:-1]
+                self._token = self._token
         self._finish_token()
         self.tokens.append('\n')
         self._token = []
@@ -202,9 +202,6 @@ class Parser(object):
         self.strict = strict
         self.parse(tokenizer.tokenize(file_like))
 
-        validator = Validator(self.target)
-        if not validator.isValid():
-            print(validator.validation_errors)
         return self.target
 
 
@@ -244,6 +241,10 @@ class Parser(object):
             ### Newlines
             if t == '\n':
                 pass
+
+            ### Comments
+            elif t.startswith(';') or t.startswith('"') or t.startswith("'"):
+                self._quoted_data_value_token(i, t)
 
             ### Comments
             elif t.startswith('#'):
@@ -405,6 +406,17 @@ class Parser(object):
             self._loop_column_name_token(i)
         elif self._state == 'in loop data':
             self._finish_loop(i)
+
+
+    def _quoted_data_value_token(self, i, t):
+        """
+        Any token starting with a single quote, double quote, or semicolon is a data value.
+
+        :type i: int    # Token number
+        :type t: str    # Token
+        """
+        quote_char = t[0]
+        self._data_value_token(i, t[1:-1])
 
 
     def _data_value_token(self, i, t):

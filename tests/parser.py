@@ -25,7 +25,7 @@ class Test_Parser(unittest.TestCase):
     def test_parser_parse_with_predefined_tokens(self):
         p = NEFreader.Parser(tokens=['data_nef_my_nmr_project'])
         d = p.parse()
-        self.assertEquals(d.datablock, 'data_nef_my_nmr_project')
+        self.assertEquals(d.datablock, 'nef_my_nmr_project')
 
     def test_parse_whitespace(self):
         self.p.parse(['\n'])
@@ -107,6 +107,23 @@ class Test_Parser(unittest.TestCase):
         self.assertEquals(self.p.target['nef_nmr_meta_data']
                                        ['nef_related_entries']
                                        [0]['database_name'], 'BMRB')
+
+
+    def test_parse_loop_with_quoted_data_value_with_starting_underscore(self):
+        tokens = ['data_nef_my_nmr_project']
+        tokens.append('save_nef_nmr_meta_data')
+        tokens.append('loop_')
+        tokens.append('_nef_related_entries.database_name')
+        tokens.append('"_BMRB"')
+        tokens.append('stop_')
+        tokens.append('save_')
+
+        self.p.parse(tokens)
+
+        self.assertEquals(self.p.target['nef_nmr_meta_data']
+                                       ['nef_related_entries']
+                                       [0]['database_name'], '_BMRB')
+
 
     def test_parse_loops(self):
         tokens = ['data_nef_my_nmr_project']

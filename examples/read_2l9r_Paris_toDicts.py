@@ -6,13 +6,12 @@ First, we'll use the conveniance function `open` to read one of the test files f
 Then, we'll explore the file and find some data.
 
 """
-from NEFreader import Parser
+from NEFreader import Nef
 
 
 nef_file = 'tests/test_files/CCPN_2l9r_Paris_155.nef'
-parser = Parser()
-paris = parser.load(nef_file, strict=True)
-
+paris = Nef()
+paris.load('tests/test_files/CCPN_2l9r_Paris_155.nef')
 
 # Get the data block name
 print('Data Block name: {}'.format(paris.datablock))

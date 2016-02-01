@@ -58,53 +58,53 @@ class Test_Tokenizer_tokenize(unittest.TestCase):
 
     def test_tokenize_quoted_string(self):
         self.l.tokenize("""'low melting point' """)
-        self.assertEquals( self.l.tokens, ['low melting point'] )
+        self.assertEquals( self.l.tokens, ["'low melting point'"] )
 
     def test_tokenize_quoted_string_with_internal_quote(self):
         self.l.tokenize("""'classed as 'unknown """)
-        self.assertEquals( self.l.tokens, ["classed as 'unknown"] )
+        self.assertEquals( self.l.tokens, ["'classed as 'unknown"] )
 
-    def test_tokenize_quoted_string(self):
+    def test_tokenize_single_quoted_string_with_tab(self):
         self.l.tokenize("""'test string'\t""")
-        self.assertEquals( self.l.tokens, ['test string'] )
+        self.assertEquals( self.l.tokens, ["'test string'"] )
 
-    def test_tokenize_quoted_string(self):
+    def test_tokenize_single_quoted_string_with_newline(self):
         self.l.tokenize("""'test string'\n""")
-        self.assertEquals( self.l.tokens, ['test string', '\n'] )
+        self.assertEquals( self.l.tokens, ["'test string'", '\n'] )
 
 
     def test_tokenize_double_quoted_string(self):
         self.l.tokenize('''"low melting point" ''')
-        self.assertEquals( self.l.tokens, ['low melting point'] )
+        self.assertEquals( self.l.tokens, ['"low melting point"'] )
 
     def test_tokenize_double_quoted_string_with_internal_quote(self):
         self.l.tokenize('''"classed as 'unknown" ''')
-        self.assertEquals( self.l.tokens, ["classed as 'unknown"] )
+        self.assertEquals( self.l.tokens, ['''"classed as 'unknown"'''] )
 
-    def test_tokenize_double_quoted_string(self):
+    def test_tokenize_double_quoted_string_with_tab(self):
         self.l.tokenize('''"test string"\t''')
-        self.assertEquals( self.l.tokens, ['test string'] )
+        self.assertEquals( self.l.tokens, ['"test string"'] )
 
-    def test_tokenize_double_quoted_string(self):
+    def test_tokenize_double_quoted_string_with_newline(self):
         self.l.tokenize('''"test string"\n''')
-        self.assertEquals( self.l.tokens, ['test string', '\n'] )
+        self.assertEquals( self.l.tokens, ['"test string"', '\n'] )
 
 
     def test_tokenize_semicolon_quoted_string(self):
         s = """;\nDepartment of Computer Science\nUniversity of Western Australia\n;"""
         t_s = """\nDepartment of Computer Science\nUniversity of Western Australia\n"""
         self.l.tokenize(s)
-        self.assertEquals(self.l.tokens, [t_s] )
+        self.assertEquals(self.l.tokens, [s] )
 
     def test_tokenize_semicolon_quoted_string2(self):
         s = """;Department of Computer Science\nUniversity of Western Australia\n;"""
         t_s = """Department of Computer Science\nUniversity of Western Australia\n"""
         self.l.tokenize(s)
-        self.assertEquals(self.l.tokens, [t_s] )
+        self.assertEquals(self.l.tokens, [s] )
 
     def test_tokenize_semicolon_quoted_string3(self):
         s = """;\nDepartment of Computer Science\nUniversity of Western Australia\n;test"""
-        t_s = """\nDepartment of Computer Science\nUniversity of Western Australia\n"""
+        t_s = """;\nDepartment of Computer Science\nUniversity of Western Australia\n;"""
         self.l.tokenize(s)
         self.assertEquals(self.l.tokens, [t_s, 'test'] )
 
