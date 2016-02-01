@@ -6,7 +6,7 @@ First, we'll use the conveniance function `open` to read one of the test files f
 Then, we'll explore the file and find some data.
 
 """
-from NEFreader import Nef, Parser
+from NEFreader import Nef
 
 
 nef_file = 'tests/test_files/CCPN_2l9r_Paris_155.nef'
