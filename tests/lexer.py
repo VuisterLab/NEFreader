@@ -114,6 +114,16 @@ class Test_Tokenizer_tokenize(unittest.TestCase):
         self.assertEquals(self.l.tokens, ['Department', 'of', 'Computer', 'Science;University',
                                           'of', '\n', 'Western', 'Australia'] )
 
+    def test_tokenize_semicolons_following_spaces(self):
+        s = """ ;\n rmsdrange:=1-93\n ;\n"""
+        self.l.tokenize(s)
+        self.assertEquals(self.l.tokens, [';', '\n','rmsdrange:=1-93', '\n', ';','\n'])
+
+    def test_tokenize_semicolons_following_spaces_in_semicolon_quoted_block(self):
+        s = """; ;\n rmsdrange:=1-93\n ;\n;"""
+        self.l.tokenize(s)
+        self.assertEquals(self.l.tokens, ['; ;\n rmsdrange:=1-93\n ;\n;'])
+
     def test_tokenize_general_string(self):
         self.l.tokenize('nef_nmr_meta_data')
         self.assertEquals( self.l.tokens, ['nef_nmr_meta_data'] )
