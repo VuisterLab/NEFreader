@@ -141,9 +141,11 @@ class Lexer(object):
 
     def _start_semicolon_comment(self):
         self._state = 'semicolon comment'
+        self._newline = False
         self._token = [';']
 
     def _continue_semicolon_comment(self, c):
+        self._newline = False
         self._token.append(c)
 
 
