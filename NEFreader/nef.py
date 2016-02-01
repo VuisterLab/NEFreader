@@ -243,49 +243,29 @@ class Nef(OrderedDict):
 
         self.add_chemical_shift_list('nef_chemical_shift_list_1', 'ppm')
 
+    @staticmethod
+    def from_text(text, strict=True):
+        nef = Nef()
 
-    def read(self, file_like, strict=True):
-        """
-        Populate the NEF object from a file-like object
-
-        :param file_like:
-        :param strict: bool
-        """
         tokenizer = Lexer()
-        parser = Parser(self)
-
+        parser = Parser(nef)
         parser.strict = strict
 
-        self.clear()
-        self.initialize()
-        del self.datablock
-        del self['nef_nmr_meta_data']
-        del self['nef_molecular_system']
-        del self['nef_chemical_shift_list_1']
+        del nef.datablock
+        del nef['nef_nmr_meta_data']
+        del nef['nef_molecular_system']
+        del nef['nef_chemical_shift_list_1']
 
-        parser.parse(tokenizer.tokenize(file_like))
+        parser.parse(tokenizer.tokenize(text))
 
-        # validator = Validator()
-        # validation_problems = validator.validate(self)
-        # if len(validation_problems) > 0:
-        #     print(validation_problems)
+        return nef
 
 
-    def load(self, filename=None, strict=True):
-        """
-        Open a file on disk and use it to populate the NEF object.
-
-        :param filename: str
-        :param strict: bool
-        """
-
-        if filename is None:
-            filename = self.input_filename
-        else:
-            self.input_filename = filename
-
+    @staticmethod
+    def from_file(filename, strict=True):
         with open(filename, 'r') as f:
-            self.read(f.read(), strict=strict)
+            nef = Nef.from_text(f.read(), strict=strict)
+        return nef
 
 
     def write(self, file_like):
@@ -302,6 +282,7 @@ class Nef(OrderedDict):
                                                       str(hash(self))[:7]
                                                      ))
         file_like.write(nefToText(self))
+
 
     def save(self, filename):
         with open(filename, 'w') as f:
