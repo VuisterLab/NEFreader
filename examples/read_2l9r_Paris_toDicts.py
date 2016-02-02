@@ -10,8 +10,7 @@ from NEFreader import Nef
 
 
 nef_file = 'tests/test_files/CCPN_2l9r_Paris_155.nef'
-paris = Nef()
-paris.load('tests/test_files/CCPN_2l9r_Paris_155.nef')
+paris = Nef.from_file('tests/test_files/CCPN_2l9r_Paris_155.nef')
 
 # Get the data block name
 print('Data Block name: {}'.format(paris.datablock))
