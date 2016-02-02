@@ -302,8 +302,6 @@ class Nef(OrderedDict):
                 self[name][l] = []
         return self[name]
 
-    def add_item_to_loop_in_saveframe(self, item, loop, saveframe):
-        pass
 
 
     def add_chemical_shift_list(self, name, cs_units='ppm'):
