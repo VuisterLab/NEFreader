@@ -7,7 +7,7 @@ from .writer import nefToText
 
 MAJOR_VERSION = '0'
 MINOR_VERSION = '8'
-PATCH_LEVEL = '1'
+PATCH_LEVEL = '4'
 __nef_version__ = '.'.join( (MAJOR_VERSION, MINOR_VERSION) )
 __version__ = '.'.join( (__nef_version__, PATCH_LEVEL) )
 
